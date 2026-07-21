@@ -6,6 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="bebe37c2-8947-467e-b4c8-43640673906b" name="更改" comment="">
       <change afterPath="$PROJECT_DIR$/.claude/plans/clever-sniffing-snail.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/.idea/PythonProject1.iml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
