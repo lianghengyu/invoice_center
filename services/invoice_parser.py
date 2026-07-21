@@ -1,0 +1,305 @@
+import re
+
+
+def parse_invoice(ocr_items, full_text):
+    result = {
+        'invoice_type': _extract_invoice_type(full_text),
+        'invoice_code': _extract_invoice_code(full_text),
+        'invoice_number': _extract_invoice_number(full_text),
+        'invoice_date': _extract_date(full_text),
+        'buyer_name': '',
+        'buyer_tax_id': '',
+        'seller_name': '',
+        'seller_tax_id': '',
+        'amount': '',
+        'tax_amount': '',
+        'total_amount': '',
+        'check_code': _extract_check_code(full_text),
+    }
+
+    _extract_buyer_seller(full_text, ocr_items, result)
+    _extract_amounts(full_text, ocr_items, result)
+
+    return result
+
+
+def _extract_invoice_type(text):
+    type_patterns = [
+        (r'增值税电子专用发票', '增值税电子专用发票'),
+        (r'增值税电子普通发票', '增值税电子普通发票'),
+        (r'增值税专用发票', '增值税专用发票'),
+        (r'增值税普通发票', '增值税普通发票'),
+        (r'电子发票[（(]增值税专用发票[)）]', '全电发票(专用)'),
+        (r'电子发票[（(]普通[)）]', '全电发票(普通)'),
+        (r'数电票', '全电发票'),
+        (r'电子发票', '电子发票'),
+    ]
+    for pattern, name in type_patterns:
+        if re.search(pattern, text):
+            return name
+    return '未知类型'
+
+
+def _extract_invoice_code(text):
+    m = re.search(r'发票代码[：:\s]*(\d{10,12})', text)
+    if m:
+        return m.group(1)
+    m = re.search(r'代码[：:\s]*(\d{10,12})', text)
+    return m.group(1) if m else ''
+
+
+def _extract_invoice_number(text):
+    m = re.search(r'发票号码[：:\s]*(\d{8,20})', text)
+    if m:
+        return m.group(1)
+    m = re.search(r'号码[：:\s]*(\d{8,20})', text)
+    if m:
+        return m.group(1)
+    m = re.search(r'数电票号码[：:\s]*(\d{20})', text)
+    return m.group(1) if m else ''
+
+
+def _extract_date(text):
+    m = re.search(r'(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日', text)
+    if m:
+        return f"{m.group(1)}年{m.group(2).zfill(2)}月{m.group(3).zfill(2)}日"
+    m = re.search(r'开票日期[：:\s]*(\d{4}[-/]\d{1,2}[-/]\d{1,2})', text)
+    return m.group(1) if m else ''
+
+
+def _extract_check_code(text):
+    m = re.search(r'校验码[：:\s]*(\d{20})', text)
+    if m:
+        return m.group(1)
+    m = re.search(r'校验码[：:\s]*(\d[\d\s]{18,}\d)', text)
+    if m:
+        return re.sub(r'\s', '', m.group(1))
+    return ''
+
+
+TAX_ID_STRICT = re.compile(r'\b([0-9A-HJ-NPQRTUWXY0-9]{18})\b')
+TAX_ID_LOOSE = re.compile(r'\b([0-9A-Z]{15,20})\b')
+
+
+def _extract_buyer_seller(full_text, ocr_items, result):
+    """基于 OCR 坐标定位购买方 / 销售方的名称与税号，兼容左右版式与上下版式。"""
+    buyer_kw, seller_kw = _locate_party_keywords(ocr_items)
+    tax_candidates = _collect_tax_id_candidates(ocr_items, result)
+
+    _assign_tax_ids(tax_candidates, buyer_kw, seller_kw, result)
+    _assign_party_names(ocr_items, buyer_kw, seller_kw, result)
+
+    # 文本正则兜底
+    if not result['buyer_name']:
+        m = re.search(r'购[买]?\s*方.*?名\s*称[：:\s]*([^\n]+)', full_text, re.DOTALL)
+        if m:
+            result['buyer_name'] = _clean_name(m.group(1))
+    if not result['seller_name']:
+        m = re.search(r'销[售]?\s*方.*?名\s*称[：:\s]*([^\n]+)', full_text, re.DOTALL)
+        if m:
+            result['seller_name'] = _clean_name(m.group(1))
+
+    if not result['buyer_tax_id'] or not result['seller_tax_id']:
+        # 全文兜底：忽略已识别为发票号码 / 校验码的数字串
+        used = {result.get('invoice_number', ''), result.get('invoice_code', ''),
+                result.get('check_code', ''),
+                result.get('buyer_tax_id', ''), result.get('seller_tax_id', '')}
+        tail = [t for t in TAX_ID_LOOSE.findall(full_text) if t not in used and 15 <= len(t) <= 20]
+        # 优先 18 位统一社会信用代码
+        tail.sort(key=lambda s: (0 if len(s) == 18 else 1, -sum(c.isalpha() for c in s)))
+        for tid in tail:
+            if not result['buyer_tax_id']:
+                result['buyer_tax_id'] = tid
+            elif not result['seller_tax_id'] and tid != result['buyer_tax_id']:
+                result['seller_tax_id'] = tid
+                break
+
+
+def _locate_party_keywords(ocr_items):
+    """返回购买方 / 销售方标签所在的 item（若存在）。"""
+    buyer_kw = None
+    seller_kw = None
+    for it in ocr_items:
+        text = re.sub(r'\s', '', it['text'])
+        if buyer_kw is None and re.search(r'购买方|购方|购买', text):
+            buyer_kw = it
+        if seller_kw is None and re.search(r'销售方|销方|销售', text):
+            seller_kw = it
+    return buyer_kw, seller_kw
+
+
+def _collect_tax_id_candidates(ocr_items, result):
+    """从 OCR items 里筛出可能是税号的候选（18 位统一社会信用代码优先）。"""
+    exclude = {result.get('invoice_number', ''), result.get('invoice_code', ''),
+               result.get('check_code', '')}
+    candidates = []
+    for it in ocr_items:
+        raw = re.sub(r'[\s:：]', '', it['text'])
+        # 剔除明显的标签行
+        if re.search(r'发票号码|发票代码|校验码|数电票号码', it['text']):
+            continue
+        # 严格 18 位
+        for m in TAX_ID_STRICT.finditer(raw):
+            tid = m.group(1)
+            if tid in exclude:
+                continue
+            # 至少包含 1 位字母，或以 91/92 等常见开头（企业统一信用代码）
+            if not (any(c.isalpha() for c in tid) or re.match(r'9[12]\d', tid) or re.match(r'\d{18}', tid)):
+                continue
+            candidates.append({'item': it, 'value': tid, 'strict': True})
+        if not candidates or candidates[-1]['item'] is not it:
+            # 宽松 15-20 位
+            for m in TAX_ID_LOOSE.finditer(raw):
+                tid = m.group(1)
+                if tid in exclude or len(tid) < 15:
+                    continue
+                # 避免与严格结果重复
+                if any(c['value'] == tid for c in candidates):
+                    continue
+                # 全数字且不足 18 位大概率是号码，跳过
+                if tid.isdigit() and len(tid) != 18:
+                    continue
+                candidates.append({'item': it, 'value': tid, 'strict': False})
+    return candidates
+
+
+def _assign_tax_ids(candidates, buyer_kw, seller_kw, result):
+    if not candidates:
+        return
+    if len(candidates) == 1:
+        result['buyer_tax_id'] = candidates[0]['value']
+        return
+
+    # 位置策略：优先看两者是否横向排列（y 相近）
+    top_two = sorted(candidates, key=lambda c: (c['item']['y'], c['item']['x']))[:2]
+    y_gap = abs(top_two[0]['item']['y'] - top_two[1]['item']['y'])
+
+    if y_gap < 40:
+        # 横向：x 小的是买方，x 大的是卖方
+        left, right = sorted(top_two, key=lambda c: c['item']['x'])
+        result['buyer_tax_id'] = left['value']
+        result['seller_tax_id'] = right['value']
+    else:
+        # 纵向：y 小的（靠上）是买方，y 大的（靠下）是卖方
+        top, bottom = sorted(top_two, key=lambda c: c['item']['y'])
+        result['buyer_tax_id'] = top['value']
+        result['seller_tax_id'] = bottom['value']
+
+    # 如果找到了关键字，用关键字锚点校正
+    if buyer_kw and seller_kw:
+        b_val, s_val = _match_by_anchor(candidates, buyer_kw, seller_kw)
+        if b_val:
+            result['buyer_tax_id'] = b_val
+        if s_val:
+            result['seller_tax_id'] = s_val
+
+
+def _match_by_anchor(candidates, buyer_kw, seller_kw):
+    def dist(item, anchor):
+        return abs(item['x'] - anchor['x']) + abs(item['y'] - anchor['y']) * 1.2
+
+    buyer_best = min(candidates, key=lambda c: dist(c['item'], buyer_kw))
+    seller_best = min(candidates, key=lambda c: dist(c['item'], seller_kw))
+    if buyer_best is seller_best:
+        return None, None
+    return buyer_best['value'], seller_best['value']
+
+
+def _assign_party_names(ocr_items, buyer_kw, seller_kw, result):
+    """根据坐标就近原则填充购/销方名称。"""
+    name_items = []
+    for it in ocr_items:
+        m = re.search(r'名\s*称[：:\s]*(.+)', it['text'])
+        if m:
+            value = _clean_name(m.group(1))
+            if value:
+                name_items.append((it, value))
+            continue
+        # 有些发票"名称:"与公司名不在同一 item
+        if re.fullmatch(r'名\s*称[：:]?', it['text'].strip()):
+            near = _find_neighbor_text(ocr_items, it)
+            if near:
+                name_items.append((it, _clean_name(near)))
+
+    if not name_items:
+        return
+
+    def dist(item, anchor):
+        if anchor is None:
+            return float('inf')
+        return abs(item['x'] - anchor['x']) + abs(item['y'] - anchor['y']) * 1.2
+
+    if buyer_kw and not result['buyer_name']:
+        best = min(name_items, key=lambda p: dist(p[0], buyer_kw))
+        if dist(best[0], buyer_kw) < 400:
+            result['buyer_name'] = best[1]
+    if seller_kw and not result['seller_name']:
+        best = min(name_items, key=lambda p: dist(p[0], seller_kw))
+        if dist(best[0], seller_kw) < 400 and best[1] != result.get('buyer_name'):
+            result['seller_name'] = best[1]
+
+
+def _find_neighbor_text(ocr_items, anchor):
+    """寻找 anchor 右侧或下方最近的一段疑似名称文本。"""
+    best = None
+    best_dist = float('inf')
+    for it in ocr_items:
+        if it is anchor:
+            continue
+        if re.search(r'名\s*称|识别号|税号|地\s*址|电\s*话|开户行|账号', it['text']):
+            continue
+        dx = it['x'] - anchor['x']
+        dy = it['y'] - anchor['y']
+        if abs(dy) > 30 and dy > 30:  # 允许略下方
+            continue
+        if dx < -10:  # 只看右侧
+            continue
+        d = abs(dx) + abs(dy) * 1.2
+        if d < best_dist and len(it['text']) >= 2:
+            best_dist = d
+            best = it['text']
+    return best
+
+
+def _find_field_after_keyword(text, patterns):
+    for p in patterns:
+        m = re.search(p, text, re.MULTILINE)
+        if m:
+            return m.group(1).strip()
+    return ''
+
+
+def _clean_name(name):
+    name = re.sub(r'纳税人识别号.*', '', name)
+    name = re.sub(r'识别号.*', '', name)
+    name = re.sub(r'[：:\s]+$', '', name)
+    return name.strip()
+
+
+def _extract_amounts(full_text, ocr_items, result):
+    total_match = re.search(
+        r'[（(]小写[)）]\s*[¥￥]?\s*([\d,]+\.\d{2})', full_text)
+    if total_match:
+        result['total_amount'] = total_match.group(1).replace(',', '')
+
+    if not result['total_amount']:
+        total_match = re.search(
+            r'价税合计.*?[¥￥]\s*([\d,]+\.\d{2})', full_text, re.DOTALL)
+        if total_match:
+            result['total_amount'] = total_match.group(1).replace(',', '')
+
+    amount_match = re.search(r'合\s*计.*?[¥￥]\s*([\d,]+\.\d{2})', full_text)
+    if amount_match:
+        result['amount'] = amount_match.group(1).replace(',', '')
+
+    tax_match = re.search(r'税\s*额.*?[¥￥]\s*([\d,]+\.\d{2})', full_text)
+    if tax_match:
+        result['tax_amount'] = tax_match.group(1).replace(',', '')
+
+    if not result['tax_amount'] and result['total_amount'] and result['amount']:
+        try:
+            tax = float(result['total_amount']) - float(result['amount'])
+            if tax >= 0:
+                result['tax_amount'] = f"{tax:.2f}"
+        except ValueError:
+            pass

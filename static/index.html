@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发票识别系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.9.1/dist/index.css">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; background: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+        .app-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; padding: 24px 0 20px; }
+        .header h1 { font-size: 24px; color: #1d2129; margin: 0 0 6px; }
+        .header p { color: #86909c; margin: 0; font-size: 13px; }
+        .upload-card { margin-bottom: 16px; }
+        .upload-area .el-upload { width: 100%; }
+        .upload-area .el-upload-dragger { width: 100%; padding: 28px 0; }
+        .action-bar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .stats-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+        .stat-card { flex: 1; min-width: 130px; }
+        .stat-card .el-card__body { padding: 14px 18px; display: flex; align-items: center; gap: 12px; }
+        .stat-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .stat-icon.total { background: #e8f3ff; color: #409eff; }
+        .stat-icon.success { background: #e8f8f0; color: #67c23a; }
+        .stat-icon.fail { background: #fef0f0; color: #f56c6c; }
+        .stat-icon.money { background: #fdf6ec; color: #e6a23c; }
+        .stat-info .label { font-size: 12px; color: #86909c; }
+        .stat-info .value { font-size: 20px; font-weight: 700; color: #1d2129; }
+        .result-card { margin-bottom: 20px; }
+        .raw-text-box { background: #f7f8fa; padding: 12px; border-radius: 6px; font-size: 12px; line-height: 1.8; white-space: pre-wrap; word-break: break-all; max-height: 240px; overflow-y: auto; color: #4e5969; border: 1px solid #e5e6eb; }
+        .empty-state { text-align: center; padding: 50px 20px; color: #c9cdd4; }
+        .empty-state p { font-size: 14px; color: #86909c; }
+        .batch-hint { background: #f7f8fa; border-radius: 8px; padding: 20px; margin-top: 16px; color: #4e5969; font-size: 13px; line-height: 2; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="app-container">
+            <div class="header">
+                <h1>发票识别系统</h1>
+                <p>支持增值税普通/专用/全电发票 | 上传图片或 PDF 自动识别</p>
+            </div>
+
+            <el-tabs v-model="activeTab" type="border-card">
+
+                <el-tab-pane name="recognize" label="图片识别">
+                    <el-card class="upload-card" shadow="hover">
+                        <el-upload ref="uploadRef" drag multiple :auto-upload="false"
+                            v-model:file-list="fileList"
+                            accept=".jpg,.jpeg,.png,.bmp,.tiff,.tif,.pdf"
+                            class="upload-area" :disabled="loading">
+                            <el-icon style="font-size:40px;color:#c0c4cc"><upload-filled /></el-icon>
+                            <div style="color:#4e5969;margin-top:8px">拖拽或点击上传发票图片</div>
+                            <div style="color:#c9cdd4;font-size:12px;margin-top:4px">支持 JPG/PNG/BMP/TIFF/PDF</div>
+                        </el-upload>
+                    </el-card>
+
+                    <div class="action-bar">
+                        <el-button type="primary" size="large" @click="startRecognize" :loading="loading" :disabled="fileList.length===0">
+                            {{ buttonText }}
+                        </el-button>
+                        <el-button size="large" @click="clearAll" :disabled="loading">清空</el-button>
+                        <span v-if="fileList.length>0" style="color:#86909c;font-size:13px">已选 {{ fileList.length }} 个文件</span>
+                    </div>
+
+                    <el-progress v-if="loading" :percentage="progressPercent" :stroke-width="6" style="margin-bottom:16px" :format="formatProgress" />
+
+                    <div class="stats-row" v-if="results.length>0">
+                        <el-card class="stat-card" shadow="hover"><div class="stat-icon total"><el-icon><document /></el-icon></div><div class="stat-info"><div class="value">{{ results.length }}</div><div class="label">总数</div></div></el-card>
+                        <el-card class="stat-card" shadow="hover"><div class="stat-icon success"><el-icon><circle-check-filled /></el-icon></div><div class="stat-info"><div class="value">{{ successCount }}</div><div class="label">成功</div></div></el-card>
+                        <el-card class="stat-card" shadow="hover"><div class="stat-icon fail"><el-icon><circle-close-filled /></el-icon></div><div class="stat-info"><div class="value">{{ errorCount }}</div><div class="label">失败</div></div></el-card>
+                        <el-card class="stat-card" shadow="hover"><div class="stat-icon money"><el-icon><coin /></el-icon></div><div class="stat-info"><div class="value">¥{{ totalAmount }}</div><div class="label">合计</div></div></el-card>
+                    </div>
+
+                    <el-card v-if="results.length>0" shadow="hover" class="result-card">
+                        <template #header>
+                            <span style="font-weight:600">识别结果 ({{ results.length }})</span>
+                        </template>
+                        <el-table :data="results" border stripe>
+                            <el-table-column type="expand">
+                                <template #default="scope">
+                                    <div style="padding:16px">
+                                        <el-alert v-if="scope.row.error" :title="scope.row.error" type="error" show-icon :closable="false" />
+                                        <el-descriptions v-if="!scope.row.error" :column="2" border size="small">
+                                            <el-descriptions-item label="发票代码">{{ scope.row.invoice_code || '-' }}</el-descriptions-item>
+                                            <el-descriptions-item label="购买方税号">{{ scope.row.buyer_tax_id || '-' }}</el-descriptions-item>
+                                            <el-descriptions-item label="销售方税号">{{ scope.row.seller_tax_id || '-' }}</el-descriptions-item>
+                                            <el-descriptions-item label="校验码">{{ scope.row.check_code || '-' }}</el-descriptions-item>
+                                        </el-descriptions>
+                                        <div v-if="scope.row.raw_text" style="margin-top:12px">
+                                            <div style="font-weight:600;margin-bottom:6px;font-size:13px">OCR原始文本</div>
+                                            <div class="raw-text-box">{{ scope.row.raw_text }}</div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="filename" label="文件名" min-width="140" show-overflow-tooltip />
+                            <el-table-column label="状态" width="80" align="center">
+                                <template #default="scope">
+                                    <el-tag v-if="scope.row.error" type="danger" size="small">失败</el-tag>
+                                    <el-tag v-else type="success" size="small">成功</el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="invoice_type" label="类型" width="130" />
+                            <el-table-column prop="invoice_number" label="发票号码" width="180" show-overflow-tooltip />
+                            <el-table-column prop="invoice_date" label="日期" width="120" />
+                            <el-table-column prop="buyer_name" label="购买方" min-width="160" show-overflow-tooltip />
+                            <el-table-column prop="seller_name" label="销售方" min-width="160" show-overflow-tooltip />
+                            <el-table-column prop="amount" label="金额" width="100" align="right" />
+                            <el-table-column prop="tax_amount" label="税额" width="100" align="right" />
+                            <el-table-column label="价税合计" width="110" align="right">
+                                <template #default="scope">
+                                    <b v-if="scope.row.total_amount" style="color:#e6a23c">¥{{ scope.row.total_amount }}</b>
+                                    <span v-else>-</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="duration" label="耗时" width="70" align="center">
+                                <template #default="scope">
+                                    <span v-if="scope.row.duration" style="font-size:12px;color:#86909c">{{ scope.row.duration }}s</span>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </el-card>
+
+                    <div class="empty-state" v-if="results.length===0 && !loading">
+                        <el-icon style="font-size:56px"><folder-opened /></el-icon>
+                        <p>上传发票图片后点击「开始识别」</p>
+                    </div>
+                </el-tab-pane>
+
+                <el-tab-pane name="batch" label="批量导出">
+                    <el-card class="upload-card" shadow="hover">
+                        <el-upload ref="batchUploadRef" drag :auto-upload="false" :limit="1"
+                            v-model:file-list="batchFileList" :on-exceed="handleBatchExceed"
+                            accept=".xlsx" class="upload-area" :disabled="batchLoading">
+                            <el-icon style="font-size:40px;color:#67c23a"><document-checked /></el-icon>
+                            <div style="color:#4e5969;margin-top:8px">拖拽或点击上传含发票图片的 Excel</div>
+                            <div style="color:#c9cdd4;font-size:12px;margin-top:4px">仅支持 .xlsx</div>
+                        </el-upload>
+                    </el-card>
+                    <div class="action-bar">
+                        <el-button type="success" size="large" @click="startBatchExport" :loading="batchLoading" :disabled="batchFileList.length===0">
+                            {{ batchLoading ? '处理中...' : '开始处理并导出' }}
+                        </el-button>
+                        <el-button size="large" @click="clearBatch" :disabled="batchLoading">清空</el-button>
+                    </div>
+                    <el-progress v-if="batchLoading" :percentage="100" :indeterminate="true" :stroke-width="6" status="success" style="margin-bottom:16px" />
+                    <el-result v-if="batchDone&&!batchError" icon="success" title="处理完成" :sub-title="batchMessage">
+                        <template #extra><el-button type="primary" @click="clearBatch">继续处理</el-button></template>
+                    </el-result>
+                    <el-result v-if="batchError" icon="error" title="处理失败" :sub-title="batchError">
+                        <template #extra><el-button type="primary" @click="clearBatch">重新上传</el-button></template>
+                    </el-result>
+                    <div class="batch-hint" v-if="!batchDone&&!batchError&&!batchLoading">
+                        <b>使用说明：</b>准备 .xlsx 文件 → 插入发票图片 → 上传 → 点击处理 → 自动下载结果
+                    </div>
+                </el-tab-pane>
+
+            </el-tabs>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus@2.9.1/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+    <script>
+    var app = Vue.createApp({
+        data: function() {
+            return {
+                activeTab: 'recognize',
+                fileList: [], results: [], loading: false, progress: 0, totalFiles: 0,
+                previewVisible: false, previewUrl: '',
+                batchFileList: [], batchLoading: false, batchDone: false, batchError: '', batchMessage: ''
+            };
+        },
+        computed: {
+            buttonText: function() { return this.loading ? '识别中 ('+this.progress+'/'+this.totalFiles+')' : '开始识别'; },
+            successCount: function() { return this.results.filter(function(r){return !r.error}).length; },
+            errorCount: function() { return this.results.filter(function(r){return r.error}).length; },
+            progressPercent: function() { return this.totalFiles>0 ? Math.round(this.progress/this.totalFiles*100) : 0; },
+            totalAmount: function() {
+                var s=0; this.results.forEach(function(r){ var v=parseFloat(r.total_amount); if(!isNaN(v)) s+=v; });
+                return s>0 ? s.toFixed(2) : '0.00';
+            }
+        },
+        methods: {
+            formatProgress: function() { return this.progress+'/'+this.totalFiles; },
+            startRecognize: async function() {
+                if(this.fileList.length===0) return;
+                this.loading=true; this.progress=0; this.results=[]; this.totalFiles=this.fileList.length;
+                for(var i=0;i<this.fileList.length;i++){
+                    var file=this.fileList[i].raw; if(!file) continue;
+                    var fd=new FormData(); fd.append('files',file);
+                    try{
+                        var resp=await fetch('/api/invoice/recognize',{method:'POST',body:fd});
+                        var data=await resp.json();
+                        if(data.success&&data.results){ for(var j=0;j<data.results.length;j++) this.results.push(data.results[j]); }
+                    }catch(err){ this.results.push({filename:file.name,error:err.message}); }
+                    this.progress=i+1;
+                }
+                this.loading=false;
+                ElementPlus.ElMessage.success('识别完成，共 '+this.results.length+' 条');
+            },
+            clearAll: function() { this.fileList=[]; this.results=[]; },
+            removeResult: function(i) { this.results.splice(i,1); },
+            handleBatchExceed: function() { ElementPlus.ElMessage.warning('仅支持一个文件'); },
+            startBatchExport: async function() {
+                if(this.batchFileList.length===0) return;
+                this.batchLoading=true; this.batchDone=false; this.batchError='';
+                var file=this.batchFileList[0].raw, fd=new FormData(); fd.append('file',file);
+                try{
+                    var resp=await fetch('/api/invoice/batch-export',{method:'POST',body:fd});
+                    if(!resp.ok){ var e=null; try{e=await resp.json()}catch(x){} throw new Error(e&&e.message?e.message:'服务端错误'); }
+                    var blob=await resp.blob(), url=window.URL.createObjectURL(blob);
+                    var a=document.createElement('a'); a.href=url; a.download='发票识别结果.xlsx';
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a); window.URL.revokeObjectURL(url);
+                    this.batchDone=true; this.batchMessage='处理完成，结果已下载';
+                    ElementPlus.ElMessage.success('导出成功');
+                }catch(err){ this.batchError=err.message; }finally{ this.batchLoading=false; }
+            },
+            clearBatch: function() { this.batchFileList=[]; this.batchDone=false; this.batchError=''; }
+        }
+    });
+    for(var k in ElementPlusIconsVue) app.component(k,ElementPlusIconsVue[k]);
+    app.use(ElementPlus);
+    app.mount('#app');
+    </script>
+</body>
+</html>

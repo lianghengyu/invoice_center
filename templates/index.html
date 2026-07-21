@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业财务发票智能识别系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus@2.9.1/dist/index.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; }
+        [v-cloak] { display: none; }
+
+        /* ===== Layout ===== */
+        .layout { display: flex; min-height: 100vh; }
+
+        /* ===== Sidebar ===== */
+        .sidebar { width: 220px; background: #1e293b; color: #cbd5e1; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+        .sidebar-logo { padding: 24px 20px; font-size: 16px; font-weight: 700; color: #fff; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 10px; }
+        .sidebar-logo .logo-icon { width: 32px; height: 32px; background: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .sidebar-nav { flex: 1; padding: 12px 0; }
+        .nav-item { padding: 12px 24px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 14px; color: #94a3b8; transition: all .2s; border-left: 3px solid transparent; }
+        .nav-item:hover { background: #334155; color: #e2e8f0; }
+        .nav-item.active { background: #334155; color: #fff; border-left-color: #3b82f6; }
+        .nav-item .nav-icon { font-size: 18px; width: 20px; text-align: center; }
+        .sidebar-footer { padding: 16px 20px; border-top: 1px solid #334155; font-size: 12px; color: #64748b; }
+
+        /* ===== Main ===== */
+        .main { flex: 1; margin-left: 220px; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: #fff; padding: 0 28px; height: 56px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 4px rgba(0,0,0,.06); position: sticky; top: 0; z-index: 50; }
+        .topbar-title { font-size: 16px; font-weight: 600; color: #1e293b; }
+        .topbar-tags { display: flex; gap: 8px; align-items: center; }
+        .tag-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .tag-badge.tech { background: #eff6ff; color: #2563eb; }
+        .tag-badge.role { background: #f0fdf4; color: #16a34a; }
+
+        .content { flex: 1; padding: 24px 28px; }
+
+        /* ===== Upload ===== */
+        .upload-card { background: #fff; border-radius: 10px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+        .upload-card .el-upload { width: 100%; }
+        .upload-card .el-upload-dragger { width: 100%; padding: 28px 0; border-radius: 8px; }
+
+        /* ===== Action Bar ===== */
+        .action-bar { display: flex; gap: 12px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+
+        /* ===== Stats ===== */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+        .stat-box { background: #fff; border-radius: 10px; padding: 18px 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+        .stat-icon-box { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .stat-icon-box.total { background: #eff6ff; color: #2563eb; }
+        .stat-icon-box.success { background: #f0fdf4; color: #16a34a; }
+        .stat-icon-box.fail { background: #fef2f2; color: #dc2626; }
+        .stat-icon-box.money { background: #fffbeb; color: #d97706; }
+        .stat-text .stat-num { font-size: 24px; font-weight: 700; color: #1e293b; line-height: 1.2; }
+        .stat-text .stat-lbl { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+        /* ===== Split View ===== */
+        .split-view { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+        .result-tabs { display: flex; border-bottom: 1px solid #f1f5f9; overflow-x: auto; background: #f8fafc; }
+        .result-tab { padding: 10px 16px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #94a3b8; white-space: nowrap; border-bottom: 2px solid transparent; transition: all .2s; }
+        .result-tab:hover { color: #475569; background: #f1f5f9; }
+        .result-tab.active { color: #2563eb; border-bottom-color: #2563eb; background: #fff; font-weight: 500; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .status-dot.success { background: #16a34a; }
+        .status-dot.fail { background: #dc2626; }
+
+        .split-panels { display: flex; min-height: 560px; }
+        .image-panel { flex: 1.05; padding: 20px; background: #f8fafc; display: flex; flex-direction: column; border-right: 1px solid #f1f5f9; }
+        .panel-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; }
+        .panel-heading .panel-title { font-size: 15px; font-weight: 700; color: #1e293b; }
+        .panel-heading .panel-sub { font-size: 12px; color: #94a3b8; }
+        .image-box { flex: 1; display: flex; align-items: center; justify-content: center; background: #fff; border: 1px dashed #e2e8f0; border-radius: 8px; padding: 16px; overflow: auto; min-height: 380px; }
+        .image-box img { max-width: 100%; max-height: 55vh; object-fit: contain; border-radius: 4px; cursor: zoom-in; transition: transform .2s; }
+        .image-box img:hover { transform: scale(1.01); }
+        .no-preview { text-align: center; color: #cbd5e1; padding: 40px 20px; }
+        .no-preview .el-icon { font-size: 48px; margin-bottom: 12px; }
+        .no-preview p { font-size: 13px; color: #94a3b8; }
+        .image-actions { display: flex; gap: 10px; margin-top: 14px; justify-content: center; }
+
+        .form-panel { flex: 1; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
+        .form-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0; }
+        .form-panel-title { font-size: 15px; font-weight: 700; color: #1e293b; }
+
+        .field-list { display: flex; flex-direction: column; gap: 10px; }
+        .field-row { display: grid; grid-template-columns: 88px 1fr; align-items: center; gap: 10px; }
+        .field-label { font-size: 13px; color: #475569; font-weight: 500; text-align: right; }
+        .field-input { position: relative; }
+        .field-input input { width: 100%; height: 34px; padding: 0 12px; font-size: 13px; color: #1e293b; background: #fff; border: 1px solid #e2e8f0; border-radius: 6px; outline: none; transition: all .2s; font-family: inherit; }
+        .field-input input:hover { border-color: #cbd5e1; }
+        .field-input input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
+        .field-input input:read-only { background: #f8fafc; }
+        .field-input.empty input { background: #fffbeb; border-color: #fbbf24; color: #92400e; }
+        .field-input.error input { background: #fef2f2; border-color: #f87171; color: #991b1b; }
+        .field-input.money input { color: #d97706; font-weight: 600; }
+        .field-input .hint { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #d97706; font-weight: 500; pointer-events: none; background: #fffbeb; padding: 0 4px; }
+
+        .raw-text-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid #e2e8f0; }
+        .raw-text-label { font-size: 12px; color: #94a3b8; font-weight: 500; margin-bottom: 8px; }
+        .raw-text-box { background: #f8fafc; padding: 12px 16px; border-radius: 6px; font-size: 12px; line-height: 1.8; white-space: pre-wrap; word-break: break-all; max-height: 160px; overflow-y: auto; color: #475569; border: 1px solid #e2e8f0; }
+
+        .form-actions { margin-top: 16px; padding-top: 14px; border-top: 1px solid #e2e8f0; display: flex; gap: 10px; justify-content: flex-end; }
+
+        /* ===== Status Badge ===== */
+        .status-badge { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+        .status-badge.success { background: #f0fdf4; color: #16a34a; }
+        .status-badge.fail { background: #fef2f2; color: #dc2626; }
+
+        /* ===== Empty ===== */
+        .empty-state { text-align: center; padding: 60px 20px; color: #cbd5e1; }
+        .empty-state .empty-icon { font-size: 56px; margin-bottom: 16px; }
+        .empty-state p { font-size: 14px; color: #94a3b8; }
+
+        /* ===== Batch ===== */
+        .batch-hint { background: #f8fafc; border-radius: 8px; padding: 20px 24px; color: #475569; font-size: 13px; line-height: 2; }
+        .batch-hint b { color: #1e293b; }
+
+        @media (max-width: 1200px) {
+            .split-panels { flex-direction: column; }
+            .image-panel { border-right: none; border-bottom: 1px solid #f1f5f9; }
+            .image-box { min-height: 320px; }
+            .image-box img { max-height: 400px; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { width: 60px; }
+            .sidebar-logo { font-size: 0; }
+            .sidebar-logo .logo-icon { width: 36px; height: 36px; }
+            .nav-item span { display: none; }
+            .main { margin-left: 60px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .field-row { grid-template-columns: 76px 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" v-cloak>
+        <div class="layout">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-logo">
+                    <div class="logo-icon">📄</div>
+                    <span>发票识别系统</span>
+                </div>
+                <nav class="sidebar-nav">
+                    <div class="nav-item" :class="{active: activeTab === 'recognize'}" @click="activeTab = 'recognize'">
+                        <el-icon class="nav-icon"><picture-filled></picture-filled></el-icon>
+                        <span>图片识别</span>
+                    </div>
+                    <div class="nav-item" :class="{active: activeTab === 'batch'}" @click="activeTab = 'batch'">
+                        <el-icon class="nav-icon"><document-copy></document-copy></el-icon>
+                        <span>批量导出</span>
+                    </div>
+                </nav>
+                <div class="sidebar-footer">离线单机 · PaddleOCR</div>
+            </aside>
+
+            <!-- Main -->
+            <div class="main">
+                <header class="topbar">
+                    <div class="topbar-title">[[ activeTab === 'recognize' ? '图片识别' : '批量导出' ]]</div>
+                    <div class="topbar-tags">
+                        <span class="tag-badge tech">离线识别 · PaddleOCR</span>
+                        <span class="tag-badge role">角色：财务审核</span>
+                    </div>
+                </header>
+
+                <div class="content">
+                    <!-- ===== 图片识别 ===== -->
+                    <div v-show="activeTab === 'recognize'">
+                        <!-- Upload -->
+                        <div class="upload-card">
+                            <el-upload ref="uploadRef" drag multiple :auto-upload="false"
+                                :file-list="fileList" :on-change="handleFileChange" :on-remove="handleFileRemove"
+                                accept=".jpg,.jpeg,.png,.bmp,.tiff,.tif,.pdf" :disabled="loading">
+                                <div style="padding: 10px 0;">
+                                    <el-icon style="font-size: 40px; color: #c0c4cc;"><upload-filled></upload-filled></el-icon>
+                                    <div style="color: #4e5969; margin-top: 10px; font-size: 14px;">
+                                        将发票图片拖到此处，或 <em style="color: #2563eb; font-style: normal; font-weight: 500;">点击选择文件</em>
+                                    </div>
+                                    <div style="color: #c9cdd4; font-size: 12px; margin-top: 6px;">
+                                        支持 JPG / PNG / BMP / TIFF / PDF，可批量多张，单张 ≤ 50MB
+                                    </div>
+                                </div>
+                            </el-upload>
+                        </div>
+
+                        <!-- Action Bar -->
+                        <div class="action-bar">
+                            <el-button type="primary" size="large" @click="startRecognize" :loading="loading"
+                                       :disabled="fileList.length === 0">
+                                <el-icon v-if="!loading"><video-play></video-play></el-icon>
+                                [[ buttonText ]]
+                            </el-button>
+                            <el-button size="large" @click="clearAll" :disabled="loading">清空</el-button>
+                            <span v-if="fileList.length > 0" style="color: #94a3b8; font-size: 13px;">
+                                已选择 [[ fileList.length ]] 个文件
+                            </span>
+                        </div>
+
+                        <el-progress v-if="loading" :percentage="progressPercent" :stroke-width="6"
+                                     style="margin-bottom: 20px;" :format="formatProgress"></el-progress>
+
+                        <!-- Stats -->
+                        <div class="stats-grid" v-if="results.length > 0">
+                            <div class="stat-box">
+                                <div class="stat-icon-box total"><el-icon><document></document></el-icon></div>
+                                <div class="stat-text">
+                                    <div class="stat-num">[[ results.length ]]</div>
+                                    <div class="stat-lbl">识别总数</div>
+                                </div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-icon-box success"><el-icon><circle-check-filled></circle-check-filled></el-icon></div>
+                                <div class="stat-text">
+                                    <div class="stat-num">[[ successResults.length ]]</div>
+                                    <div class="stat-lbl">识别成功</div>
+                                </div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-icon-box fail"><el-icon><circle-close-filled></circle-close-filled></el-icon></div>
+                                <div class="stat-text">
+                                    <div class="stat-num">[[ errorResults.length ]]</div>
+                                    <div class="stat-lbl">识别失败</div>
+                                </div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-icon-box money"><el-icon><coin></coin></el-icon></div>
+                                <div class="stat-text">
+                                    <div class="stat-num">¥[[ totalAmount ]]</div>
+                                    <div class="stat-lbl">价税合计 (元)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Split View -->
+                        <div class="split-view" v-if="results.length > 0">
+                            <!-- Result Tabs -->
+                            <div class="result-tabs">
+                                <div v-for="(row, index) in results" :key="index"
+                                     class="result-tab" :class="{active: selectedIndex === index}"
+                                     @click="selectedIndex = index">
+                                    <span class="status-dot" :class="row.error ? 'fail' : 'success'"></span>
+                                    <span>[[ row.filename ]]</span>
+                                    <span v-if="row.duration" style="color: #cbd5e1; font-size: 11px;">[[ row.duration ]]s</span>
+                                </div>
+                            </div>
+
+                            <!-- Split Panels -->
+                            <div class="split-panels" v-if="results[selectedIndex]">
+                                <!-- Left: Image -->
+                                <div class="image-panel">
+                                    <div class="panel-heading">
+                                        <div class="panel-title">🖼️ 发票原图预览</div>
+                                        <div class="panel-sub">[[ results[selectedIndex].filename ]]</div>
+                                    </div>
+                                    <div class="image-box">
+                                        <img v-if="results[selectedIndex]._previewUrl"
+                                             :src="results[selectedIndex]._previewUrl"
+                                             @click="previewImage(results[selectedIndex]._previewUrl)">
+                                        <div v-else class="no-preview">
+                                            <el-icon><picture></picture></el-icon>
+                                            <p>暂无图片预览（PDF 或已刷新页面）</p>
+                                        </div>
+                                    </div>
+                                    <div class="image-actions" v-if="results[selectedIndex]._previewUrl">
+                                        <el-button size="small" @click="previewImage(results[selectedIndex]._previewUrl)">
+                                            <el-icon><zoom-in></zoom-in></el-icon> 放大查看
+                                        </el-button>
+                                    </div>
+                                </div>
+
+                                <!-- Right: Form -->
+                                <div class="form-panel">
+                                    <div class="form-panel-header">
+                                        <div class="form-panel-title">📝 结构化关键字段</div>
+                                        <span class="status-badge" :class="results[selectedIndex].error ? 'fail' : 'success'">
+                                            [[ results[selectedIndex].error ? '识别失败' : '识别成功' ]]
+                                        </span>
+                                    </div>
+
+                                    <!-- Error -->
+                                    <div v-if="results[selectedIndex].error">
+                                        <el-alert :title="results[selectedIndex].error" type="error" show-icon :closable="false"></el-alert>
+                                    </div>
+
+                                    <!-- Fields -->
+                                    <div v-else class="field-list">
+                                        <div class="field-row">
+                                            <div class="field-label">发票类型</div>
+                                            <div class="field-input" :class="{empty: !results[selectedIndex].invoice_type}">
+                                                <input type="text" :value="results[selectedIndex].invoice_type || ''" :placeholder="results[selectedIndex].invoice_type ? '' : '未识别'" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">发票号码</div>
+                                            <div class="field-input" :class="{empty: !results[selectedIndex].invoice_number}">
+                                                <input type="text" :value="results[selectedIndex].invoice_number || ''" :placeholder="results[selectedIndex].invoice_number ? '' : '未识别'" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">发票代码</div>
+                                            <div class="field-input" :class="{empty: !results[selectedIndex].invoice_code}">
+                                                <input type="text" :value="results[selectedIndex].invoice_code || ''" :placeholder="results[selectedIndex].invoice_code ? '' : '未识别'" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">开票日期</div>
+                                            <div class="field-input" :class="{empty: !results[selectedIndex].invoice_date}">
+                                                <input type="text" :value="results[selectedIndex].invoice_date || ''" :placeholder="results[selectedIndex].invoice_date ? '' : '未识别'" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">购方名称</div>
+                                            <div class="field-input" :class="{empty: !results[selectedIndex].buyer_name}">
+                                                <input type="text" :value="results[selectedIndex].buyer_name || ''" :placeholder="results[selectedIndex].buyer_name ? '' : '未识别，请手动补录'" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">购方税号</div>
+                                            <div class="field-input" :class="{empty: !results[selectedIndex].buyer_tax_id, error: results[selectedIndex].buyer_tax_id && results[selectedIndex].buyer_tax_id.length !== 18}">
+                                                <input type="text" :value="results[selectedIndex].buyer_tax_id || ''" :placeholder="results[selectedIndex].buyer_tax_id ? '' : '未识别，请手动补录'" readonly>
+                                                <span class="hint" v-if="results[selectedIndex].buyer_tax_id && results[selectedIndex].buyer_tax_id.length !== 18">位数不匹配</span>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">销方名称</div>
+                                            <div class="field-input" :class="{empty: !results[selectedIndex].seller_name}">
+                                                <input type="text" :value="results[selectedIndex].seller_name || ''" :placeholder="results[selectedIndex].seller_name ? '' : '未识别，请手动补录'" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">销方税号</div>
+                                            <div class="field-input" :class="{empty: !results[selectedIndex].seller_tax_id, error: results[selectedIndex].seller_tax_id && results[selectedIndex].seller_tax_id.length !== 18}">
+                                                <input type="text" :value="results[selectedIndex].seller_tax_id || ''" :placeholder="results[selectedIndex].seller_tax_id ? '' : '未识别，请手动补录'" readonly>
+                                                <span class="hint" v-if="results[selectedIndex].seller_tax_id && results[selectedIndex].seller_tax_id.length !== 18">位数不匹配</span>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">不含税金额</div>
+                                            <div class="field-input" :class="{empty: !results[selectedIndex].amount}">
+                                                <input type="text" :value="results[selectedIndex].amount || ''" :placeholder="results[selectedIndex].amount ? '' : '未识别'" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">税额</div>
+                                            <div class="field-input" :class="{empty: !results[selectedIndex].tax_amount}">
+                                                <input type="text" :value="results[selectedIndex].tax_amount || ''" :placeholder="results[selectedIndex].tax_amount ? '' : '未识别'" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">价税合计</div>
+                                            <div class="field-input money" :class="{empty: !results[selectedIndex].total_amount}">
+                                                <input type="text" :value="results[selectedIndex].total_amount ? '¥ ' + results[selectedIndex].total_amount : ''" :placeholder="results[selectedIndex].total_amount ? '' : '未识别'" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">校验码</div>
+                                            <div class="field-input" :class="{empty: !results[selectedIndex].check_code}">
+                                                <input type="text" :value="results[selectedIndex].check_code || ''" :placeholder="results[selectedIndex].check_code ? '' : '无'" readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Raw Text -->
+                                    <div class="raw-text-section" v-if="results[selectedIndex].raw_text">
+                                        <div class="raw-text-label">OCR 原始识别文本</div>
+                                        <div class="raw-text-box">[[ results[selectedIndex].raw_text ]]</div>
+                                    </div>
+
+                                    <!-- Actions -->
+                                    <div class="form-actions">
+                                        <el-button type="danger" plain size="small" @click="removeResult(selectedIndex)">
+                                            <el-icon><delete></delete></el-icon> 删除此结果
+                                        </el-button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Empty -->
+                        <div class="empty-state" v-if="results.length === 0 && !loading">
+                            <el-icon class="empty-icon"><folder-opened></folder-opened></el-icon>
+                            <p>上传发票图片后点击「开始识别」，识别结果将在此处展示</p>
+                        </div>
+                    </div>
+
+                    <!-- ===== 批量导出 ===== -->
+                    <div v-show="activeTab === 'batch'">
+                        <div class="upload-card">
+                            <el-upload ref="batchUploadRef" drag :auto-upload="false" :limit="1"
+                                :file-list="batchFileList" :on-change="handleBatchFileChange"
+                                :on-remove="handleBatchFileRemove" :on-exceed="handleBatchExceed"
+                                accept=".xlsx" :disabled="batchLoading">
+                                <div style="padding: 10px 0;">
+                                    <el-icon style="font-size: 40px; color: #16a34a;"><document-checked></document-checked></el-icon>
+                                    <div style="color: #4e5969; margin-top: 10px; font-size: 14px;">
+                                        将包含发票图片的 Excel 拖到此处，或 <em style="color: #2563eb; font-style: normal; font-weight: 500;">点击选择文件</em>
+                                    </div>
+                                    <div style="color: #c9cdd4; font-size: 12px; margin-top: 6px;">
+                                        仅支持 .xlsx 格式，Excel 中需包含嵌入的发票图片
+                                    </div>
+                                </div>
+                            </el-upload>
+                        </div>
+
+                        <div class="action-bar">
+                            <el-button type="success" size="large" @click="startBatchExport" :loading="batchLoading"
+                                       :disabled="batchFileList.length === 0">
+                                <el-icon v-if="!batchLoading"><download></download></el-icon>
+                                [[ batchLoading ? '处理中...' : '开始处理并导出' ]]
+                            </el-button>
+                            <el-button size="large" @click="clearBatch" :disabled="batchLoading">清空</el-button>
+                        </div>
+
+                        <el-progress v-if="batchLoading" :percentage="100" :indeterminate="true" :stroke-width="6"
+                                     style="margin-bottom: 20px;" status="success"></el-progress>
+
+                        <el-result v-if="batchDone && !batchError" icon="success" title="处理完成" :sub-title="batchMessage">
+                            <template #extra>
+                                <el-button type="primary" @click="clearBatch">继续处理下一个</el-button>
+                            </template>
+                        </el-result>
+
+                        <el-result v-if="batchError" icon="error" title="处理失败" :sub-title="batchError">
+                            <template #extra>
+                                <el-button type="primary" @click="clearBatch">重新上传</el-button>
+                            </template>
+                        </el-result>
+
+                        <div class="batch-hint" v-if="!batchDone && !batchError && !batchLoading">
+                            <div style="font-weight: 600; margin-bottom: 8px; color: #1e293b;">使用说明</div>
+                            <div>1. 准备一个 <b>.xlsx</b> 文件，将发票图片直接插入到 Excel 单元格中</div>
+                            <div>2. 上传该 Excel 文件，点击「开始处理并导出」</div>
+                            <div>3. 系统自动提取 Excel 中所有嵌入图片，逐张 OCR 识别</div>
+                            <div>4. 处理完成后自动下载包含识别结果的新 Excel 文件</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Dialog -->
+        <el-dialog v-model="previewVisible" title="图片预览" width="auto" align-center destroy-on-close>
+            <img :src="previewUrl" style="max-width: 100%; max-height: 70vh; display: block; margin: 0 auto;" />
+        </el-dialog>
+    </div>
+
+    <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus@2.9.1"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue@2.3.1"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
