@@ -30,7 +30,7 @@ def _extract_invoice_type(text):
         (r'增值税专用发票', '增值税专用发票'),
         (r'增值税普通发票', '增值税普通发票'),
         (r'电子发票[（(]增值税专用发票[)）]', '全电发票(专用)'),
-        (r'电子发票[（(]普通[)）]', '全电发票(普通)'),
+        (r'电子发票[（(]普通发票?[)）]', '全电发票(普通)'),
         (r'数电票', '全电发票'),
         (r'电子发票', '电子发票'),
     ]
@@ -277,25 +277,68 @@ def _clean_name(name):
 
 
 def _extract_amounts(full_text, ocr_items, result):
-    total_match = re.search(
-        r'[（(]小写[)）]\s*[¥￥]?\s*([\d,]+\.\d{2})', full_text)
-    if total_match:
-        result['total_amount'] = total_match.group(1).replace(',', '')
+    """提取金额、税额、价税合计：先正则匹配，再坐标定位兜底。"""
 
-    if not result['total_amount']:
-        total_match = re.search(
-            r'价税合计.*?[¥￥]\s*([\d,]+\.\d{2})', full_text, re.DOTALL)
-        if total_match:
-            result['total_amount'] = total_match.group(1).replace(',', '')
+    # ---- 价税合计 (total_amount) ----
+    for pattern in [
+        r'[（(]小写[)）]\s*[¥￥]?\s*([\d,]+\.\d{2})',
+        r'价税合计.*?[¥￥]\s*([\d,]+\.\d{2})',
+        r'价税合计[^\n]{0,20}?([\d,]+\.\d{2})',
+        r'([\d,]+\.\d{2})\s*价税合计',
+        r'含\s*税\s*合\s*计[^\n]{0,20}?([\d,]+\.\d{2})',
+        r'小写[)）]?\s*[¥￥]?\s*([\d,]+\.\d{2})',
+    ]:
+        m = re.search(pattern, full_text, re.DOTALL)
+        if m:
+            result['total_amount'] = m.group(1).replace(',', '')
+            break
 
-    amount_match = re.search(r'合\s*计.*?[¥￥]\s*([\d,]+\.\d{2})', full_text)
-    if amount_match:
-        result['amount'] = amount_match.group(1).replace(',', '')
+    # ---- 合计行双数字：金额 + 税额 ----
+    dual = re.search(
+        r'(?<!税)合\s*计\s*[¥￥]?\s*([\d,]+\.\d{2})\s+[¥￥]?\s*([\d,]+\.\d{2})',
+        full_text)
+    if dual:
+        val1 = dual.group(1).replace(',', '')
+        val2 = dual.group(2).replace(',', '')
+        if val1 != result.get('total_amount'):
+            if not result.get('amount'):
+                result['amount'] = val1
+            if not result.get('tax_amount'):
+                result['tax_amount'] = val2
 
-    tax_match = re.search(r'税\s*额.*?[¥￥]\s*([\d,]+\.\d{2})', full_text)
-    if tax_match:
-        result['tax_amount'] = tax_match.group(1).replace(',', '')
+    # ---- 合计金额 (amount) 单数字兜底 ----
+    if not result['amount']:
+        for pattern in [
+            r'(?<!税)合\s*计.*?[¥￥]\s*([\d,]+\.\d{2})',
+            r'(?<!税)合\s*计[^\n]{0,30}?([\d,]+\.\d{2})',
+            r'合\s*计\s*金\s*额[^\n]{0,20}?([\d,]+\.\d{2})',
+            r'金\s*额\s*合\s*计[^\n]{0,20}?([\d,]+\.\d{2})',
+        ]:
+            m = re.search(pattern, full_text)
+            if m:
+                val = m.group(1).replace(',', '')
+                if val != result.get('total_amount'):
+                    result['amount'] = val
+                    break
 
+    # ---- 税额 (tax_amount) ----
+    if not result['tax_amount']:
+        for pattern in [
+            r'税\s*额.*?[¥￥]\s*([\d,]+\.\d{2})',
+            r'(?<!价)税\s*额[^\n]{0,30}?([\d,]+\.\d{2})',
+            r'合\s*计\s*税\s*额[^\n]{0,20}?([\d,]+\.\d{2})',
+            r'税\s*额\s*合\s*计[^\n]{0,20}?([\d,]+\.\d{2})',
+        ]:
+            m = re.search(pattern, full_text)
+            if m:
+                result['tax_amount'] = m.group(1).replace(',', '')
+                break
+
+    # ---- 坐标定位兜底 ----
+    if not result['total_amount'] or not result['amount'] or not result['tax_amount']:
+        _extract_amounts_by_position(ocr_items, result)
+
+    # ---- 差值推算税额 ----
     if not result['tax_amount'] and result['total_amount'] and result['amount']:
         try:
             tax = float(result['total_amount']) - float(result['amount'])
@@ -303,3 +346,52 @@ def _extract_amounts(full_text, ocr_items, result):
                 result['tax_amount'] = f"{tax:.2f}"
         except ValueError:
             pass
+
+
+def _extract_amounts_by_position(ocr_items, result):
+    """坐标定位兜底：根据关键词与金额 item 的相对位置匹配。"""
+    DECIMAL_RE = re.compile(r'[¥￥]?\s*([\d,]+\.\d{2})')
+
+    amount_items = []
+    for it in ocr_items:
+        text = it['text'].strip().replace(' ', '')
+        for m in DECIMAL_RE.finditer(text):
+            amount_items.append({
+                'item': it,
+                'value': m.group(1).replace(',', ''),
+            })
+
+    if not amount_items:
+        return
+
+    total_kw = None
+    subtotal_kw = None
+    for it in ocr_items:
+        text = re.sub(r'\s', '', it['text'])
+        if total_kw is None and ('价税合计' in text or '小写' in text):
+            total_kw = it
+        if subtotal_kw is None and re.search(r'(?<!价税)合计', text):
+            subtotal_kw = it
+
+    ROW_THRESH = 25
+
+    # 价税合计行：同行任意位置的金额（全电发票中金额可能在关键词左侧）
+    if not result['total_amount'] and total_kw:
+        row = [a for a in amount_items
+               if abs(a['item']['y'] - total_kw['y']) < ROW_THRESH]
+        if row:
+            result['total_amount'] = max(row, key=lambda a: float(a['value']))['value']
+
+    # 合计行：左侧为金额，右侧为税额
+    if subtotal_kw and (not result['amount'] or not result['tax_amount']):
+        row = [a for a in amount_items
+               if abs(a['item']['y'] - subtotal_kw['y']) < ROW_THRESH
+               and a['item']['x'] >= subtotal_kw['x']]
+        row.sort(key=lambda a: a['item']['x'])
+        if len(row) >= 2:
+            if not result['amount']:
+                result['amount'] = row[0]['value']
+            if not result['tax_amount']:
+                result['tax_amount'] = row[-1]['value']
+        elif len(row) == 1 and not result['amount']:
+            result['amount'] = row[0]['value']
