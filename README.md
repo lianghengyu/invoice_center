@@ -4,13 +4,58 @@
 
 ---
 
+## 技术栈
+
+| 层级 | 技术 | 说明 |
+|------|------|------|
+| OCR 引擎 | **PaddleOCR 3.7.0** | 百度开源 OCR，使用 PP-OCRv6 模型，中文识别精度最高 |
+| 图像处理 | **OpenCV** | 图片倾斜检测与校正（霍夫变换），提升 OCR 识别率 |
+| PDF 解析 | **pypdfium2** | 将 PDF 每页渲染为图片，再交给 OCR 处理 |
+| 字段提取 | **Python 正则表达式 (re)** | 从 OCR 文本中匹配发票号码、金额、日期、购销方等字段 |
+| 后端框架 | **Flask** | 提供 REST API（上传识别、Excel 导出） |
+| Excel 处理 | **openpyxl** | 读取 Excel 内嵌图片、生成带样式的 .xlsx 导出文件 |
+| 前端 | **Vue 3 + Element Plus** | CDN 引入，无需 Node.js 构建环境 |
+
+### 识别流程
+
+```
+上传图片/PDF
+    │
+    ▼
+OpenCV 倾斜校正（PDF 先转图片）
+    │
+    ▼
+PaddleOCR 文字识别（PP-OCRv6 模型）
+    │
+    ▼
+正则表达式提取发票字段
+    │
+    ▼
+返回结构化 JSON → 前端表格展示 / Excel 导出
+```
+
+### 识别字段
+
+| 字段 | 匹配方式 |
+|------|---------|
+| 发票类型 | 关键词匹配（增值税普通/专用/电子/全电发票） |
+| 发票代码 | `发票代码：(\d{10,12})` |
+| 发票号码 | `发票号码：(\d{8,20})` |
+| 开票日期 | `(\d{4})年(\d{1,2})月(\d{1,2})日` |
+| 购买方/销售方 | "名称"关键词后的文本 + 区域分段 |
+| 纳税人识别号 | `[0-9A-Z]{15,20}` 格式匹配 |
+| 金额/税额/价税合计 | `¥` 符号 + 金额格式，结合上下文关键词定位 |
+| 校验码 | `校验码：(\d{20})` |
+
+---
+
 ## 功能说明
 
 ### 图片识别（Tab1）
 - 上传发票图片（JPG / PNG / BMP / TIFF）或 PDF 文件
 - 支持批量上传多张
-- 自动识别发票类型、号码、日期、金额、购销方等信息
-- 页面表格展示识别结果
+- 左右布局：左侧文件列表带缩略图预览，右侧展示识别结果表格
+- 展开表格行可查看完整字段和 OCR 原始文本
 
 ### 批量导出（Tab2）
 - 上传一个包含发票图片的 Excel 文件（.xlsx）
@@ -50,10 +95,10 @@ python3 --version
 ### 第一步：进入项目目录
 
 ```bash
-cd /Users/lianghy/work/zl_project/invoice_python
+cd /path/to/invoice_python
 ```
 
-> 如果项目在其他位置，请替换为实际路径。
+> 请将 `/path/to/invoice_python` 替换为项目实际所在的路径。
 
 ### 第二步：创建虚拟环境（仅首次需要）
 
@@ -107,7 +152,7 @@ http://localhost:8080
 每次使用只需要执行两条命令：
 
 ```bash
-cd /Users/lianghy/work/zl_project/invoice_python
+cd /path/to/invoice_python
 .venv/bin/python app.py
 ```
 
@@ -122,10 +167,11 @@ cd /Users/lianghy/work/zl_project/invoice_python
 ### 图片识别
 
 1. 打开页面，默认在「图片识别」Tab
-2. 点击上传区域或拖拽文件，选择一张或多张发票图片/PDF
-3. 点击「开始识别」按钮
-4. 等待识别完成，结果会展示在下方表格中
-5. 点击表格行左侧的展开箭头，可查看完整信息和 OCR 原始文本
+2. 在左侧上传区域点击或拖拽，选择一张或多张发票图片/PDF
+3. 左侧会显示文件列表和缩略图预览
+4. 点击「开始识别」按钮
+5. 等待识别完成，右侧展示统计卡片和结果表格
+6. 点击表格行左侧的展开箭头，可查看完整信息和 OCR 原始文本
 
 ### 批量导出
 
@@ -181,16 +227,16 @@ app.run(host='0.0.0.0', port=9090, debug=True, use_reloader=False)
 
 ```
 invoice_python/
-├── app.py                  # 应用入口
-├── config.py               # 配置文件
-├── requirements.txt        # Python 依赖
+├── app.py                  # 应用入口，Flask 服务启动 + OCR 模型预加载
+├── config.py               # 配置文件（上传目录、文件大小限制）
+├── requirements.txt        # Python 依赖清单
 ├── routes/
-│   └── invoice_routes.py   # API 接口
+│   └── invoice_routes.py   # API 接口（识别、批量导出）
 ├── services/
-│   ├── image_processor.py  # 图像预处理
-│   ├── ocr_service.py      # OCR 识别引擎
-│   ├── invoice_parser.py   # 发票字段解析
-│   └── excel_exporter.py   # Excel 导出
+│   ├── image_processor.py  # OpenCV 图像预处理（倾斜校正）
+│   ├── ocr_service.py      # PaddleOCR 封装（模型加载、文字识别）
+│   ├── invoice_parser.py   # 正则表达式提取发票字段
+│   └── excel_exporter.py   # openpyxl 生成 Excel 导出文件
 └── static/
-    └── index.html          # 前端页面
+    └── index.html          # 前端页面（Vue 3 + Element Plus）
 ```

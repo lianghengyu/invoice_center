@@ -1,4 +1,4 @@
-from flask import Flask, send_file, Response, render_template
+from flask import Flask
 from config import MAX_CONTENT_LENGTH
 from routes.invoice_routes import invoice_bp
 
@@ -6,12 +6,13 @@ from routes.invoice_routes import invoice_bp
 def create_app():
     app = Flask(__name__)
     app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
     app.register_blueprint(invoice_bp)
 
     @app.route('/')
     def index():
-        return render_template('index.html')
+        return app.send_static_file('index.html')
 
     return app
 
