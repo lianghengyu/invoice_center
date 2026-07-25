@@ -12,8 +12,6 @@
         .header { text-align: center; padding: 12px 0 14px; }
         .header h1 { font-size: 22px; color: #1d2129; margin: 0 0 4px; }
         .header p { color: #86909c; margin: 0; font-size: 13px; }
-
-        /* ===== 顶部工具条 ===== */
         .toolbar { background: #fff; border-radius: 8px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,.04); margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         .toolbar .upload-inline { flex: 1; min-width: 260px; }
         .toolbar .upload-inline .el-upload { width: 100%; }
@@ -21,19 +19,14 @@
         .toolbar-actions { display: flex; gap: 8px; align-items: center; }
         .toolbar-stats { display: flex; gap: 16px; font-size: 13px; color: #86909c; padding-left: 12px; border-left: 1px solid #e5e6eb; }
         .toolbar-stats b { font-size: 15px; }
-
-        /* ===== 主体左右分栏 ===== */
         .main-layout { display: flex; gap: 16px; align-items: stretch; }
         .left-panel, .right-panel { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.04); display: flex; flex-direction: column; min-height: 620px; }
         .left-panel { flex: 1.1; min-width: 0; }
         .right-panel { flex: 1; min-width: 0; }
-
         .panel-header { padding: 14px 18px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
         .panel-header .panel-title { font-size: 15px; font-weight: 600; color: #1d2129; }
         .panel-header .panel-sub { font-size: 12px; color: #86909c; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .panel-body { flex: 1; padding: 18px; overflow: auto; display: flex; flex-direction: column; }
-
-        /* ===== 图片预览 ===== */
         .preview-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 8px 12px; background: #f7f8fa; border-radius: 6px; }
         .preview-nav .filename { font-size: 13px; color: #1d2129; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; margin: 0 10px; }
         .preview-nav .counter { font-size: 12px; color: #86909c; }
@@ -45,8 +38,6 @@
         .preview-empty .icon { font-size: 60px; margin-bottom: 12px; color: #dcdfe6; }
         .preview-empty .title { font-size: 15px; color: #86909c; }
         .preview-empty .desc { font-size: 13px; color: #c9cdd4; margin-top: 6px; }
-
-        /* ===== 结果切换 tabs ===== */
         .result-tabs { display: flex; gap: 6px; padding: 8px 18px 0; border-bottom: 1px solid #f0f0f0; overflow-x: auto; }
         .result-tab { padding: 8px 14px; font-size: 13px; color: #86909c; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; display: flex; align-items: center; gap: 6px; transition: all .2s; }
         .result-tab:hover { color: #409eff; }
@@ -54,8 +45,6 @@
         .status-dot { width: 8px; height: 8px; border-radius: 50%; }
         .status-dot.success { background: #67c23a; }
         .status-dot.fail { background: #f56c6c; }
-
-        /* ===== 字段列表 ===== */
         .field-list { display: flex; flex-direction: column; gap: 10px; }
         .field-row { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 12px; padding: 4px 0; }
         .field-label { font-size: 13px; color: #4e5969; font-weight: 500; text-align: right; }
@@ -68,18 +57,13 @@
         .field-value.warn input { background: #fef2f2; border-color: #f56c6c; color: #991b1b; }
         .field-value.warn::after { content: '位数异常'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #991b1b; background: #fef2f2; padding: 2px 8px; border-radius: 10px; font-weight: 500; pointer-events: none; }
         .field-value.money input { color: #e6a23c; font-weight: 700; }
-
         .raw-text-section { margin-top: 16px; padding-top: 14px; border-top: 1px dashed #e5e6eb; }
         .raw-text-label { font-size: 12px; color: #86909c; font-weight: 500; margin-bottom: 8px; }
         .raw-text-box { background: #f7f8fa; padding: 10px 12px; border-radius: 6px; font-size: 12px; line-height: 1.7; white-space: pre-wrap; word-break: break-all; max-height: 160px; overflow-y: auto; color: #4e5969; border: 1px solid #e5e6eb; }
-
         .empty-right { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #c9cdd4; padding: 60px 20px; }
         .empty-right .icon { font-size: 60px; margin-bottom: 12px; color: #dcdfe6; }
         .empty-right .title { font-size: 15px; color: #86909c; }
         .empty-right .desc { font-size: 13px; color: #c9cdd4; margin-top: 6px; }
-
-        .batch-hint { background: #f7f8fa; border-radius: 8px; padding: 20px; margin-top: 16px; color: #4e5969; font-size: 13px; line-height: 2; }
-
         @media (max-width: 1100px) {
             .main-layout { flex-direction: column; }
             .left-panel, .right-panel { min-height: auto; }
@@ -97,7 +81,6 @@
 
             <el-tabs v-model="activeTab" type="border-card">
                 <el-tab-pane name="recognize" label="图片识别">
-                    <!-- ===== 顶部工具条 ===== -->
                     <div class="toolbar">
                         <div class="upload-inline">
                             <el-upload ref="uploadRef" drag multiple :auto-upload="false"
@@ -112,6 +95,9 @@
                             <el-button type="primary" @click="startRecognize" :loading="loading" :disabled="fileList.length===0">
                                 {{ buttonText }}
                             </el-button>
+                            <el-button type="success" @click="saveResults" :disabled="loading || successCount===0" v-if="results.length > 0">
+                                <el-icon style="margin-right:4px"><check></check></el-icon>保存结果
+                            </el-button>
                             <el-button @click="clearAll" :disabled="loading">清空</el-button>
                         </div>
                         <div class="toolbar-stats" v-if="results.length > 0">
@@ -124,9 +110,7 @@
 
                     <el-progress v-if="loading" :percentage="progressPercent" :stroke-width="4" style="margin-bottom:16px" :format="formatProgress"></el-progress>
 
-                    <!-- ===== 主体左右分栏 ===== -->
                     <div class="main-layout">
-                        <!-- 左：图片预览 -->
                         <div class="left-panel">
                             <div class="panel-header">
                                 <div class="panel-title">📄 发票原图</div>
@@ -163,7 +147,6 @@
                             </div>
                         </div>
 
-                        <!-- 右：字段列表 -->
                         <div class="right-panel">
                             <div class="panel-header">
                                 <div class="panel-title">📝 结构化关键字段</div>
@@ -172,7 +155,6 @@
                                 </el-tag>
                             </div>
 
-                            <!-- 结果切换 tabs -->
                             <div class="result-tabs" v-if="results.length > 1">
                                 <div v-for="(r, idx) in results" :key="idx"
                                      class="result-tab" :class="{active: previewIdx === idx}"
@@ -183,7 +165,6 @@
                             </div>
 
                             <div class="panel-body">
-                                <!-- 有识别结果 -->
                                 <template v-if="currentResult">
                                     <el-alert v-if="currentResult.error"
                                               :title="currentResult.error" type="error"
@@ -282,7 +263,6 @@
                                     </div>
                                 </template>
 
-                                <!-- 无识别结果 -->
                                 <div v-else class="empty-right">
                                     <div class="icon"><el-icon><document-copy></document-copy></el-icon></div>
                                     <div class="title">暂无识别结果</div>
@@ -293,37 +273,40 @@
                     </div>
                 </el-tab-pane>
 
-                <el-tab-pane name="batch" label="批量导出">
-                    <el-card shadow="hover" style="max-width:600px;margin:0 auto">
-                        <el-upload ref="batchUploadRef" drag :auto-upload="false" :limit="1"
-                            v-model:file-list="batchFileList" :on-exceed="handleBatchExceed"
-                            accept=".xlsx" :disabled="batchLoading">
-                            <el-icon style="font-size:40px;color:#67c23a"><document-checked></document-checked></el-icon>
-                            <div style="color:#4e5969;margin-top:8px">拖拽或点击上传含发票图片的 Excel</div>
-                            <div style="color:#c9cdd4;font-size:12px;margin-top:4px">仅支持 .xlsx</div>
-                        </el-upload>
-                        <div style="display:flex;gap:10px;margin-top:16px">
-                            <el-button type="success" size="large" @click="startBatchExport" :loading="batchLoading" :disabled="batchFileList.length===0" style="flex:1">
-                                {{ batchLoading ? '处理中...' : '开始处理并导出' }}
+                <el-tab-pane name="batch" label="导出识别结果">
+                    <div style="max-width:800px;margin:0 auto">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                            <span style="font-size:15px;font-weight:600;color:#1d2129">📁 已保存的识别结果</span>
+                            <el-button size="small" @click="loadSavedFiles">
+                                <el-icon style="margin-right:4px"><refresh></refresh></el-icon>刷新
                             </el-button>
-                            <el-button size="large" @click="clearBatch" :disabled="batchLoading">清空</el-button>
                         </div>
-                    </el-card>
-                    <el-progress v-if="batchLoading" :percentage="100" :indeterminate="true" :stroke-width="6" status="success" style="margin-top:16px;max-width:600px;margin-left:auto;margin-right:auto"></el-progress>
-                    <el-result v-if="batchDone&&!batchError" icon="success" title="处理完成" :sub-title="batchMessage">
-                        <template #extra><el-button type="primary" @click="clearBatch">继续处理</el-button></template>
-                    </el-result>
-                    <el-result v-if="batchError" icon="error" title="处理失败" :sub-title="batchError">
-                        <template #extra><el-button type="primary" @click="clearBatch">重新上传</el-button></template>
-                    </el-result>
-                    <div class="batch-hint" v-if="!batchDone&&!batchError&&!batchLoading" style="max-width:600px;margin:16px auto 0">
-                        <b>使用说明：</b>准备 .xlsx 文件 → 将发票图片插入 Excel → 上传 → 点击处理 → 自动下载识别结果
+
+                        <el-table :data="savedFiles" v-loading="savedLoading" empty-text="暂无保存的文件"
+                                  stripe style="width:100%" size="default">
+                            <el-table-column prop="filename" label="文件名" min-width="240"></el-table-column>
+                            <el-table-column prop="created_at" label="保存时间" width="180" align="center"></el-table-column>
+                            <el-table-column label="文件大小" width="120" align="center">
+                                <template #default="scope">
+                                    {{ formatFileSize(scope.row.size) }}
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="操作" width="180" align="center">
+                                <template #default="scope">
+                                    <el-button type="primary" link size="small" @click="downloadFile(scope.row.filename)">
+                                        <el-icon style="margin-right:2px"><download></download></el-icon>下载
+                                    </el-button>
+                                    <el-button type="danger" link size="small" @click="deleteFile(scope.row.filename)">
+                                        <el-icon style="margin-right:2px"><delete></delete></el-icon>删除
+                                    </el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
                     </div>
                 </el-tab-pane>
             </el-tabs>
         </div>
 
-        <!-- 图片放大预览 -->
         <el-dialog v-model="previewDialogVisible" title="图片预览" width="auto" align-center destroy-on-close>
             <img :src="previewDialogUrl" style="max-width:100%;max-height:75vh;display:block;margin:0 auto">
         </el-dialog>
@@ -343,7 +326,8 @@
                 results: [],
                 loading: false, progress: 0, totalFiles: 0,
                 previewDialogVisible: false, previewDialogUrl: '',
-                batchFileList: [], batchLoading: false, batchDone: false, batchError: '', batchMessage: ''
+                savedFiles: [],
+                savedLoading: false,
             };
         },
         computed: {
@@ -377,6 +361,11 @@
                     });
                 },
                 deep: true
+            },
+            activeTab: function(val) {
+                if (val === 'batch') {
+                    this.loadSavedFiles();
+                }
             }
         },
         methods: {
@@ -431,6 +420,89 @@
                     ElementPlus.ElMessage.warning('识别完成: ' + this.successCount + ' 成功, ' + this.errorCount + ' 失败');
                 }
             },
+            saveResults: async function() {
+                var successResults = this.results.filter(function(r) { return !r.error; });
+                if (successResults.length === 0) {
+                    ElementPlus.ElMessage.warning('没有成功识别的结果可保存');
+                    return;
+                }
+                var cleanResults = successResults.map(function(r) {
+                    return {
+                        filename: r.filename || '',
+                        invoice_type: r.invoice_type || '',
+                        invoice_code: r.invoice_code || '',
+                        invoice_number: r.invoice_number || '',
+                        invoice_date: r.invoice_date || '',
+                        buyer_name: r.buyer_name || '',
+                        buyer_tax_id: r.buyer_tax_id || '',
+                        seller_name: r.seller_name || '',
+                        seller_tax_id: r.seller_tax_id || '',
+                        amount: r.amount || '',
+                        tax_amount: r.tax_amount || '',
+                        total_amount: r.total_amount || '',
+                        check_code: r.check_code || ''
+                    };
+                });
+                try {
+                    var resp = await fetch('/api/invoice/save-results', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ results: cleanResults })
+                    });
+                    var data = await resp.json();
+                    if (data.success) {
+                        ElementPlus.ElMessage.success('已保存 ' + data.count + ' 条结果到 ' + data.filename);
+                    } else {
+                        ElementPlus.ElMessage.error(data.message || '保存失败');
+                    }
+                } catch (err) {
+                    ElementPlus.ElMessage.error('保存失败: ' + err.message);
+                }
+            },
+            loadSavedFiles: async function() {
+                this.savedLoading = true;
+                try {
+                    var resp = await fetch('/api/invoice/saved-files');
+                    var data = await resp.json();
+                    if (data.success) {
+                        this.savedFiles = data.files;
+                    }
+                } catch (err) {
+                    ElementPlus.ElMessage.error('加载文件列表失败');
+                } finally {
+                    this.savedLoading = false;
+                }
+            },
+            downloadFile: function(filename) {
+                var a = document.createElement('a');
+                a.href = '/api/invoice/saved-files/' + encodeURIComponent(filename);
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            },
+            deleteFile: function(filename) {
+                var self = this;
+                ElementPlus.ElMessageBox.confirm('确定删除 "' + filename + '" 吗？', '确认删除', {
+                    type: 'warning'
+                }).then(async function() {
+                    try {
+                        var resp = await fetch('/api/invoice/saved-files/' + encodeURIComponent(filename), { method: 'DELETE' });
+                        var data = await resp.json();
+                        if (data.success) {
+                            ElementPlus.ElMessage.success('已删除');
+                            self.loadSavedFiles();
+                        }
+                    } catch (err) {
+                        ElementPlus.ElMessage.error('删除失败');
+                    }
+                }).catch(function() {});
+            },
+            formatFileSize: function(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+            },
             clearAll: function() {
                 this.previews.forEach(function(p){ try{URL.revokeObjectURL(p.url)}catch(e){} });
                 this.fileList = [];
@@ -439,29 +511,6 @@
                 this.results = [];
                 if (this.$refs.uploadRef) this.$refs.uploadRef.clearFiles();
             },
-            handleBatchExceed: function() { ElementPlus.ElMessage.warning('仅支持一个文件'); },
-            startBatchExport: async function() {
-                if (this.batchFileList.length === 0) return;
-                this.batchLoading = true; this.batchDone = false; this.batchError = '';
-                var file = this.batchFileList[0].raw;
-                var fd = new FormData(); fd.append('file', file);
-                try {
-                    var resp = await fetch('/api/invoice/batch-export', { method: 'POST', body: fd });
-                    if (!resp.ok) { var e=null; try{e=await resp.json()}catch(x){} throw new Error(e&&e.message?e.message:'服务端错误'); }
-                    var blob = await resp.blob();
-                    var url = window.URL.createObjectURL(blob);
-                    var a = document.createElement('a'); a.href = url; a.download = '发票识别结果.xlsx';
-                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                    this.batchDone = true; this.batchMessage = '处理完成，结果已下载';
-                    ElementPlus.ElMessage.success('导出成功');
-                } catch (err) {
-                    this.batchError = err.message;
-                } finally {
-                    this.batchLoading = false;
-                }
-            },
-            clearBatch: function() { this.batchFileList = []; this.batchDone = false; this.batchError = ''; }
         }
     });
     for (var k in ElementPlusIconsVue) app.component(k, ElementPlusIconsVue[k]);
