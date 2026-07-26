@@ -1,7 +1,6 @@
 import easyocr
 import os
 import urllib.request
-import sys
 
 _ocr_instance = None
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -80,3 +79,18 @@ def get_full_text(items):
             current_y = item['y']
     lines.append(' '.join(current_line))
     return '\n'.join(lines)
+
+def reset_ocr():
+    global _ocr_instance
+    if _ocr_instance is not None:
+        try:
+            import gc
+            _ocr_instance = None
+            gc.collect()
+            import torch
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except Exception:
+            _ocr_instance = None
+    else:
+        _ocr_instance = None

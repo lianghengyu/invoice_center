@@ -92,6 +92,10 @@
                             </el-upload>
                         </div>
                         <div class="toolbar-actions">
+                            <el-radio-group v-model="ocrEngine" @change="onEngineChange" size="small" style="margin-right:8px">
+                                    <el-radio-button value="paddle">PaddleOCR</el-radio-button>
+                                    <el-radio-button value="easyocr">EasyOCR</el-radio-button>
+                            </el-radio-group>
                             <el-button type="primary" @click="startRecognize" :loading="loading" :disabled="fileList.length===0">
                                 {{ buttonText }}
                             </el-button>
@@ -328,6 +332,7 @@
                 previewDialogVisible: false, previewDialogUrl: '',
                 savedFiles: [],
                 savedLoading: false,
+                ocrEngine: 'paddle',
             };
         },
         computed: {
@@ -367,6 +372,15 @@
                     this.loadSavedFiles();
                 }
             }
+        },
+        mounted: async function() {
+            try {
+                var resp = await fetch('/api/invoice/current-engine');
+                var data = await resp.json();
+                if (data.success && data.current) {
+                    this.ocrEngine = data.current;
+                }
+            } catch (e) {}
         },
         methods: {
             onFileChange: function(file) {
@@ -510,6 +524,28 @@
                 this.previewIdx = 0;
                 this.results = [];
                 if (this.$refs.uploadRef) this.$refs.uploadRef.clearFiles();
+            },
+            onEngineChange: async function(engine) {
+                ElementPlus.ElMessage.info('正在切换引擎...');
+                try {
+                    var resp = await fetch('/api/invoice/switch-engine', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ engine: engine })
+                    });
+                    var data = await resp.json();
+                    if (data.success) {
+                        var label = engine === 'paddle' ? 'PaddleOCR' : 'EasyOCR';
+                        ElementPlus.ElMessage.success('已切换到: ' + label);
+                    } else {
+                        ElementPlus.ElMessage.error(data.message || '切换失败');
+                        this.ocrEngine = this.ocrEngine === 'paddle' ? 'easyocr' : 'paddle';
+                    }
+                } 
+                catch (err) {
+                    ElementPlus.ElMessage.error('切换失败: ' + err.message);
+                    this.ocrEngine = this.ocrEngine === 'paddle' ? 'easyocr' : 'paddle';
+                }   
             },
         }
     });

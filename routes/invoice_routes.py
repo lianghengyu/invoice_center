@@ -7,7 +7,7 @@ import numpy as np
 from flask import Blueprint, request, jsonify, send_file, after_this_request
 from config import UPLOAD_FOLDER, ALLOWED_EXTENSIONS, SAVED_FOLDER
 from services.image_processor import preprocess, pdf_to_images
-from services.ocr_service import recognize, get_full_text
+from services.ocr_manager import recognize, get_full_text, get_current_engine
 from services.invoice_parser import parse_invoice
 from services.excel_exporter import export_to_excel, DEFAULT_FILENAME
 
@@ -191,3 +191,26 @@ def batch_export():
 
     return send_file(filepath, as_attachment=True, download_name=export_name,
                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+@invoice_bp.route('/switch-engine', methods=['POST'])
+def switch_engine():
+    data = request.get_json()
+    engine = data.get('engine', '')
+    try:
+        from services.ocr_manager import switch_engine as _switch_engine
+        _switch_engine(engine)
+        return jsonify({'success': True, 'engine': engine})
+    except ValueError as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'切换引擎失败: {str(e)}'}), 500
+
+
+@invoice_bp.route('/current-engine', methods=['GET'])
+def current_engine():
+    from services.ocr_manager import get_current_engine, get_available_engines
+    return jsonify({
+        'success': True,
+        'current': get_current_engine(),
+        'available': get_available_engines(),
+    })
