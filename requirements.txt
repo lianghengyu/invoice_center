@@ -5,3 +5,4 @@ opencv-python-headless==5.0.0.93
 openpyxl==3.1.5
 pypdfium2==5.12.1
 Werkzeug==3.1.8
+easyocr==2.1.0

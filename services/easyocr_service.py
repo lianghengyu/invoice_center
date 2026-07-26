@@ -1,12 +1,39 @@
-from easyocr import easyocr
+import easyocr
+import os
+import urllib.request
+import sys
 
 _ocr_instance = None
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR,"..", "model", "easyocr")
+if not os.path.exists(MODEL_PATH):
+    os.makedirs(MODEL_PATH)
 
+MODEL_URL = "https://www.modelscope.cn/models/Ceceliachenen/easyocr/resolve/master"
+
+craft_path = os.path.join(MODEL_PATH, "craft_mlt_25k.pth")
+if not os.path.exists(craft_path):
+    print("下载 craft_mlt_25k.pth ...")
+    urllib.request.urlretrieve(f"{MODEL_URL}/craft_mlt_25k.pth", craft_path)
+
+english_path = os.path.join(MODEL_PATH, "english_g2.pth")
+if not os.path.exists(english_path):
+    print("下载 english_g2.pth ...")
+    urllib.request.urlretrieve(f"{MODEL_URL}/english_g2.pth", english_path)
+
+zh_path = os.path.join(MODEL_PATH, "zh_sim_g2.pth")
+if not os.path.exists(zh_path):
+    print("下载 zh_sim_g2.pth ...")
+    urllib.request.urlretrieve(f"{MODEL_URL}/zh_sim_g2.pth", zh_path)
 
 def _get_ocr():
     global _ocr_instance
     if _ocr_instance is None:
-        _ocr_instance = easyocr.Reader(['ch_sim', 'en'], gpu=True)
+        _ocr_instance = easyocr.Reader(['ch_sim', 'en'], 
+                                       gpu=True,
+                                       model_storage_directory=MODEL_PATH,
+                                       download_enabled=False  # 允许自动下载（依旧海外源）
+                                    )
     return _ocr_instance
 
 
