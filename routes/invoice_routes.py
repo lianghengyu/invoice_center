@@ -5,11 +5,11 @@ import zipfile
 import cv2
 import numpy as np
 from flask import Blueprint, request, jsonify, send_file, after_this_request
-from config import UPLOAD_FOLDER, ALLOWED_EXTENSIONS
+from config import UPLOAD_FOLDER, ALLOWED_EXTENSIONS, SAVED_FOLDER
 from services.image_processor import preprocess, pdf_to_images
 from services.ocr_service import recognize, get_full_text
 from services.invoice_parser import parse_invoice
-from services.excel_exporter import export_to_excel
+from services.excel_exporter import export_to_excel, DEFAULT_FILENAME
 
 invoice_bp = Blueprint('invoice', __name__, url_prefix='/api/invoice')
 
@@ -76,6 +76,57 @@ def recognize_invoices():
                 os.remove(saved_path)
 
     return jsonify({'success': True, 'results': results})
+
+
+@invoice_bp.route('/save-results', methods=['POST'])
+def save_results():
+    data = request.get_json()
+    if not data or not data.get('results'):
+        return jsonify({'success': False, 'message': '无识别结果可保存'}), 400
+
+    results = data['results']
+    filepath = export_to_excel(results, DEFAULT_FILENAME)
+
+    return jsonify({
+        'success': True,
+        'filename': DEFAULT_FILENAME,
+        'saved_at': time.strftime('%Y-%m-%d %H:%M:%S'),
+        'count': len(results),
+    })
+
+
+@invoice_bp.route('/saved-files', methods=['GET'])
+def list_saved_files():
+    files = []
+    if os.path.exists(SAVED_FOLDER):
+        for f in sorted(os.listdir(SAVED_FOLDER), reverse=True):
+            if f.endswith('.xlsx'):
+                full_path = os.path.join(SAVED_FOLDER, f)
+                stat = os.stat(full_path)
+                files.append({
+                    'filename': f,
+                    'size': stat.st_size,
+                    'created_at': time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(stat.st_ctime)),
+                })
+    return jsonify({'success': True, 'files': files})
+
+
+@invoice_bp.route('/saved-files/<filename>', methods=['GET'])
+def download_saved_file(filename):
+    filepath = os.path.join(SAVED_FOLDER, filename)
+    if not os.path.exists(filepath):
+        return jsonify({'success': False, 'message': '文件不存在'}), 404
+    return send_file(filepath, as_attachment=True, download_name=filename,
+                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+
+@invoice_bp.route('/saved-files/<filename>', methods=['DELETE'])
+def delete_saved_file(filename):
+    filepath = os.path.join(SAVED_FOLDER, filename)
+    if not os.path.exists(filepath):
+        return jsonify({'success': False, 'message': '文件不存在'}), 404
+    os.remove(filepath)
+    return jsonify({'success': True})
 
 
 def _extract_images_from_xlsx(xlsx_path):
