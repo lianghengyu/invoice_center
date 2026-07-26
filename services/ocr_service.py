@@ -6,11 +6,17 @@ _ocr_instance = None
 def _get_ocr():
     global _ocr_instance
     if _ocr_instance is None:
+        import paddle
+        paddle.framework.set_flags({
+            'FLAGS_enable_pir_api': False,
+            'FLAGS_use_mkldnn': False,
+        })
         _ocr_instance = PaddleOCR(
             use_doc_orientation_classify=False,
             use_doc_unwarping=False,
             use_textline_orientation=True,
             lang='ch',
+            enable_mkldnn=False,
         )
     return _ocr_instance
 

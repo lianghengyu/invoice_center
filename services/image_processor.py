@@ -45,7 +45,7 @@ def _detect_skew_angle(gray_img):
         return 0.0
     angles = []
     for line in lines:
-        x1, y1, x2, y2 = line[0]
+        x1, y1, x2, y2 = line.reshape(-1)[:4]
         angle = np.degrees(np.arctan2(y2 - y1, x2 - x1))
         if abs(angle) < 45:
             angles.append(angle)

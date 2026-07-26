@@ -1,3 +1,10 @@
+import os
+os.environ['FLAGS_enable_pir_api'] = '0'
+os.environ['FLAGS_use_mkldnn'] = '0'
+os.environ['PADDLE_DISABLE_PIR'] = '1'
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['KMP_BLOCKTIME'] = '0'
+
 from flask import Flask
 from config import MAX_CONTENT_LENGTH
 from routes.invoice_routes import invoice_bp
