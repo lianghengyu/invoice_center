@@ -7,3 +7,5 @@ exports/
 .DS_Store
 .claude/
 model/
+test_ocr.py
+test.py
