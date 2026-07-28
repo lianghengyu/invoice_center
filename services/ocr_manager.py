@@ -11,26 +11,20 @@ def get_available_engines():
     return VALID_ENGINES
 
 
-def switch_engine(engine_name):
-    global _current_engine
-    if engine_name not in VALID_ENGINES:
-        raise ValueError(f"不支持的引擎: {engine_name}，可选: {VALID_ENGINES}")
-
-    if _current_engine == engine_name:
-        return
-
-    if _current_engine == 'paddle':
+def _release_engine(engine_name):
+    if engine_name == 'paddle':
         print('正在释放 PaddleOCR 显存...')
         from services.ocr_service import reset_ocr
         reset_ocr()
         print('PaddleOCR 显存已释放')
-    elif _current_engine == 'easyocr':
+    elif engine_name == 'easyocr':
         print('正在释放 EasyOCR 显存...')
         from services.easyocr_service import reset_ocr
         reset_ocr()
         print('EasyOCR 显存已释放')
 
-    _current_engine = engine_name
+
+def _load_engine(engine_name):
     print(f'正在加载 {engine_name} 到显存...')
     if engine_name == 'paddle':
         from services.ocr_service import init_ocr
@@ -39,6 +33,31 @@ def switch_engine(engine_name):
         from services.easyocr_service import init_ocr
         init_ocr()
     print(f'{engine_name} 加载完成')
+
+
+def switch_engine(engine_name):
+    global _current_engine
+    if engine_name not in VALID_ENGINES:
+        raise ValueError(f"不支持的引擎: {engine_name}，可选: {VALID_ENGINES}")
+
+    if _current_engine == engine_name:
+        return
+
+    old_engine = _current_engine
+    _release_engine(old_engine)
+
+    try:
+        _load_engine(engine_name)
+    except Exception:
+        # 加载失败时回滚到原引擎，避免状态与实际引擎不一致
+        if old_engine is not None:
+            try:
+                _load_engine(old_engine)
+            except Exception:
+                _current_engine = None
+                raise
+        raise
+    _current_engine = engine_name
 
 
 def recognize(image):

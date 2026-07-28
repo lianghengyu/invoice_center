@@ -1,6 +1,8 @@
+import os
+# macOS 上 paddle 与 torch 各自携带 libomp，重复加载会导致段错误，必须在导入前放行
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 from paddleocr import PaddleOCR
 import paddle
-import os
 import urllib.request
 import tarfile
 

@@ -1,5 +1,7 @@
-import easyocr
 import os
+# macOS 上 torch 与 paddle 各自携带 libomp，重复加载会导致段错误，必须在导入前放行
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
+import easyocr
 import urllib.request
 
 _ocr_instance = None
