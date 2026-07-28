@@ -4,9 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bebe37c2-8947-467e-b4c8-43640673906b" name="更改" comment="">
+    <list default="true" id="bebe37c2-8947-467e-b4c8-43640673906b" name="更改" comment="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动及设置脚本，并更新了项目依赖文件以支持不同平台的需求。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/services/invoice_parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/invoice_parser.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -16,6 +15,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;lianghengyu&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/lianghengyu/invoice_center.git&quot;,
+    &quot;accountId&quot;: &quot;f0c52fa7-a353-451b-a0b2-9448721ffc88&quot;
+  }
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 4
 }</component>
@@ -25,22 +36,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Notification.DisplayName-DoNotAsk-cosyBalloonNotifications": "Qoder CN Notification Balloon Group",
-    "Notification.DoNotAsk-cosyBalloonNotifications": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "main",
-    "last_opened_file_path": "/Users/liliuqing/workSpace_python/invoice_center",
-    "settings.editor.selected.configurable": "preferences.pluginManager"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Notification.DisplayName-DoNotAsk-cosyBalloonNotifications&quot;: &quot;Qoder CN Notification Balloon Group&quot;,
+    &quot;Notification.DoNotAsk-cosyBalloonNotifications&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/liliuqing/workSpace_python/invoice_center&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;qoder.settings.plugin&quot;
   },
-  "keyToStringList": {
-    "ChangesTree.GroupingKeys": [
-      "repository"
+  &quot;keyToStringList&quot;: {
+    &quot;ChangesTree.GroupingKeys&quot;: [
+      &quot;repository&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -57,6 +68,23 @@
       <option name="presentableId" value="Default" />
       <updated>1784613127453</updated>
     </task>
+    <task id="LOCAL-00001" summary="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle和torch各自携带libomp而导致的段错误问题。同时优化了ocr_manager中的引擎切换逻辑，增加了异常处理机制以确保状态一致性。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;">
+      <option name="closed" value="true" />
+      <created>1785202946344</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1785202946344</updated>
+    </task>
+    <task id="LOCAL-00002" summary="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动及设置脚本，并更新了项目依赖文件以支持不同平台的需求。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;">
+      <option name="closed" value="true" />
+      <created>1785203323514</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1785203323514</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -99,6 +127,25 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="fix(ocr_service):" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle和torch各自携带libomp而导致的段" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle和torch各自携带libomp而导致的段错误问题。同时优化了ocr_manager" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle和torch各自携带libomp而导致的段错误问题。同时优化了ocr_manager中的引擎切换逻辑，增加了异常处理" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle和torch各自携带libomp而导致的段错误问题。同时优化了ocr_manager中的引擎切换逻辑，增加了异常处理机制以确保状态一致性。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;" />
+    <MESSAGE value="Aone Copilot 请求模型中..." />
+    <MESSAGE value="chore: 添加Mac和Windows平台的启动" />
+    <MESSAGE value="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此" />
+    <MESSAGE value="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动" />
+    <MESSAGE value="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动及设置脚本，并更新了项目依赖" />
+    <MESSAGE value="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动及设置脚本，并更新了项目依赖文件以支持不同平台的需求。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;" />
+    <option name="LAST_COMMIT_MESSAGE" value="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动及设置脚本，并更新了项目依赖文件以支持不同平台的需求。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

@@ -175,6 +175,13 @@ OCR 文字识别（PaddleOCR / EasyOCR 可切换）
 ### Q：启动时报错 `No module named 'xxx'`
 依赖没装全，重新运行一遍安装脚本（`setup_mac.sh` / `setup_win.bat`）即可，已装过的包会自动跳过。
 
+### Q：Windows 上识别报错 `ConvertPirAttribute2RuntimeAttribute not support ... onednn_instruction.cc`
+这是 PaddlePaddle 3.3.x 在 x86 CPU（oneDNN 后端）上的官方已知回归 bug（[Paddle#77340](https://github.com/PaddlePaddle/Paddle/issues/77340)）。降级到 3.2.2 即可：
+```bat
+.venv\Scripts\pip.exe install paddlepaddle==3.2.2 -i https://mirrors.aliyun.com/pypi/simple/
+```
+本项目 `requirements.txt` 已固定 3.2.2，按安装脚本安装的不会遇到此问题。
+
 ### Q：Mac 上切换引擎后服务崩溃 / 报 segmentation fault
 项目代码已内置修复（设置 `KMP_DUPLICATE_LIB_OK=TRUE` 规避 paddle 与 torch 的 libomp 冲突）。请确保使用 `start_mac.sh` 启动，不要绕过脚本手动启动。
 
