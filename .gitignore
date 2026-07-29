@@ -4,6 +4,7 @@ uploads/
 exports/
 *.pyc
 .idea/
+.idea/workspace.xml
 .DS_Store
 .claude/
 model/
@@ -11,6 +12,7 @@ test_ocr.py
 test.py
 runs/
 saved_results/*.pth # 模型权重
+saved_results/fasterrcnn_model/
 saved_results/**/*.pth # 模型权重
 saved_results/**/*.jpg
 saved_results/**/*.png
