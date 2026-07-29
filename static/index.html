@@ -13,7 +13,7 @@
         .header h1 { font-size: 22px; color: #1d2129; margin: 0 0 4px; }
         .header p { color: #86909c; margin: 0; font-size: 13px; }
         .toolbar { background: #fff; border-radius: 8px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,.04); margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-        .toolbar .upload-inline { flex: 1; min-width: 260px; }
+        .toolbar .upload-inline { width: 35%; min-width: 300px; }
         .toolbar .upload-inline .el-upload { width: 100%; }
         .toolbar .upload-inline .el-upload-dragger { padding: 12px 20px; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .toolbar-actions { display: flex; gap: 8px; align-items: center; }
@@ -87,15 +87,21 @@
                                 v-model:file-list="fileList" :on-change="onFileChange"
                                 accept=".jpg,.jpeg,.png,.bmp,.tiff,.tif,.pdf"
                                 :disabled="loading" :show-file-list="false">
-                                <el-icon style="font-size:24px;color:#c0c4cc"><upload-filled></upload-filled></el-icon>
+                                <el-icon style="width:450px;font-size:24px;color:#c0c4cc"><upload-filled></upload-filled></el-icon>
                                 <span style="color:#4e5969;font-size:13px">拖拽或点击上传发票（JPG / PNG / PDF）</span>
                             </el-upload>
                         </div>
                         <div class="toolbar-actions">
-                            <el-radio-group v-model="ocrEngine" @change="onEngineChange" size="small" style="margin-right:8px">
-                                    <el-radio-button value="paddle">PaddleOCR</el-radio-button>
-                                    <el-radio-button value="easyocr">EasyOCR</el-radio-button>
-                            </el-radio-group>
+                            <el-select v-model="detectorModel" @change="onDetectorChange" size="small" style="width:130px;margin-right:8px" placeholder="检测模型">
+                                <el-option label="YOLO V10" value="yolov10"></el-option>
+                                <el-option label="YOLO V8" value="yolov8"></el-option>
+                                <el-option label="Faster R-CNN" value="fasterrcnn"></el-option>
+                                <el-option label="无检测" value="none"></el-option>
+                            </el-select>
+                            <el-select v-model="ocrEngine" @change="onEngineChange" size="small" style="width:120px;margin-right:8px" placeholder="OCR引擎">
+                                <el-option label="PaddleOCR" value="paddle"></el-option>
+                                <el-option label="EasyOCR" value="easyocr"></el-option>
+                            </el-select>
                             <el-button type="primary" @click="startRecognize" :loading="loading" :disabled="fileList.length===0">
                                 {{ buttonText }}
                             </el-button>
@@ -137,8 +143,8 @@
                                 <div class="preview-frame">
                                     <template v-if="previews.length > 0 && previews[previewIdx]">
                                         <img v-if="previews[previewIdx].type==='image'"
-                                             :src="previews[previewIdx].url"
-                                             @click="openPreviewDialog(previews[previewIdx].url)">
+                                             :src="currentResult && currentResult.preview_image ? 'data:image/jpeg;base64,' + currentResult.preview_image : previews[previewIdx].url"
+                                             @click="openPreviewDialog(currentResult && currentResult.preview_image ? 'data:image/jpeg;base64,' + currentResult.preview_image : previews[previewIdx].url)">
                                         <iframe v-else-if="previews[previewIdx].type==='pdf'"
                                                 :src="previews[previewIdx].url"></iframe>
                                     </template>
@@ -333,6 +339,7 @@
                 savedFiles: [],
                 savedLoading: false,
                 ocrEngine: 'paddle',
+                detectorModel: 'yolov8',
             };
         },
         computed: {
@@ -381,6 +388,13 @@
                     this.ocrEngine = data.current;
                 }
             } catch (e) {}
+            try {
+                var resp2 = await fetch('/api/invoice/current-detector');
+                var data2 = await resp2.json();
+                if (data2.success && data2.current) {
+                    this.detectorModel = data2.current;
+                }
+            } catch (e) {}
         },
         methods: {
             onFileChange: function(file) {
@@ -402,6 +416,19 @@
             formatProgress: function() { return this.progress+'/'+this.totalFiles; },
             startRecognize: async function() {
                 if (this.fileList.length === 0) return;
+
+                // 确保检测模型已同步到后端
+                console.log('[前端] 开始识别, detectorModel =', this.detectorModel);
+                try {
+                    await fetch('/api/invoice/switch-detector', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ detector: this.detectorModel })
+                    });
+                } catch (e) {
+                    console.warn('[前端] 同步检测模型失败:', e);
+                }
+
                 this.loading = true;
                 this.progress = 0;
                 this.results = [];
@@ -546,6 +573,29 @@
                     ElementPlus.ElMessage.error('切换失败: ' + err.message);
                     this.ocrEngine = this.ocrEngine === 'paddle' ? 'easyocr' : 'paddle';
                 }   
+            },
+            onDetectorChange: async function(detector) {
+                console.log('[前端] onDetectorChange 被调用, detector =', detector);
+                ElementPlus.ElMessage.info('正在切换检测模型...');
+                try {
+                    var resp = await fetch('/api/invoice/switch-detector', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ detector: detector })
+                    });
+                    var data = await resp.json();
+                    console.log('[前端] switch-detector 响应:', data);
+                    if (data.success) {
+                        var label = detector === 'none' ? '无检测' : (detector === 'yolov8' ? 'YOLOv8' : 'Faster R-CNN');
+                        ElementPlus.ElMessage.success('已切换到: ' + label);
+                    } else {
+                        ElementPlus.ElMessage.error(data.message || '切换失败');
+                        this.detectorModel = 'none';
+                    }
+                } catch (err) {
+                    ElementPlus.ElMessage.error('切换失败: ' + err.message);
+                    this.detectorModel = 'none';
+                }
             },
         }
     });
