@@ -11,6 +11,9 @@ test_ocr.py
 test.py
 runs/
 saved_results/*.pth # 模型权重
+saved_results/**/*.jpg
+saved_results/**/*.png
+saved_results/**/*.xlsx
 # YOLO数据集缓存
 *.cache
 # 数据集图片和标注
