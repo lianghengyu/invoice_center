@@ -31,17 +31,37 @@ def _allowed_file(filename):
 
 
 def _draw_detections(img, detections):
+    from PIL import Image, ImageDraw, ImageFont
     vis = img.copy()
+    vis_rgb = cv2.cvtColor(vis, cv2.COLOR_BGR2RGB)
+    pil_img = Image.fromarray(vis_rgb)
+    draw = ImageDraw.Draw(pil_img)
+
+    font_path = "/System/Library/Fonts/PingFang.ttc"
+    try:
+        font = ImageFont.truetype(font_path, 16)
+    except:
+        font = ImageFont.load_default()
+
     for det in detections:
         name = det['class_name']
         x1, y1, x2, y2 = [int(v) for v in det['bbox']]
         color = BOX_COLORS.get(name, (100, 100, 100))
-        cv2.rectangle(vis, (x1, y1), (x2, y2), color, 3)
+        color_rgb = tuple(color)
+
+        draw.rectangle([x1, y1, x2, y2], outline=color_rgb, width=3)
+
         label = f"{name} {det['confidence']:.2f}"
-        (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-        cv2.rectangle(vis, (x1, y1 - th - 6), (x1 + tw + 4, y1), color, -1)
-        cv2.putText(vis, label, (x1 + 2, y1 - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-    return vis
+        bbox = draw.textbbox((0, 0), label, font=font)
+        tw = bbox[2] - bbox[0]
+        th = bbox[3] - bbox[1]
+
+        label_y = max(0, y1 - th - 4)
+        draw.rectangle([x1, label_y, x1 + tw + 6, label_y + th + 4], fill=color_rgb)
+        draw.text((x1 + 3, label_y + 2), label, fill=(255, 255, 255), font=font)
+
+    vis_result = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+    return vis_result
 
 
 def _img_to_base64(img):
