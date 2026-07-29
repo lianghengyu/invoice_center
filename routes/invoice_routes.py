@@ -4,31 +4,123 @@ import time
 import zipfile
 import cv2
 import numpy as np
+import base64
 from flask import Blueprint, request, jsonify, send_file, after_this_request
 from config import UPLOAD_FOLDER, ALLOWED_EXTENSIONS, SAVED_FOLDER
 from services.image_processor import preprocess, pdf_to_images
 from services.ocr_manager import recognize, get_full_text, get_current_engine
+from services.detector_manager import detect_fields, get_current_detector, VALID_DETECTORS
 from services.invoice_parser import parse_invoice
 from services.excel_exporter import export_to_excel, DEFAULT_FILENAME
 
 invoice_bp = Blueprint('invoice', __name__, url_prefix='/api/invoice')
+
+BOX_COLORS = {
+    '发票代码': (255, 0, 0),
+    '发票号码': (0, 200, 0),
+    '发票日期': (0, 100, 255),
+    '购买方名称': (255, 165, 0),
+    '购买方纳税人识别号': (128, 0, 128),
+    '价税合计': (0, 200, 200),
+    '增值税电子普通发票': (200, 0, 200),
+}
 
 
 def _allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def _draw_detections(img, detections):
+    vis = img.copy()
+    for det in detections:
+        name = det['class_name']
+        x1, y1, x2, y2 = [int(v) for v in det['bbox']]
+        color = BOX_COLORS.get(name, (100, 100, 100))
+        cv2.rectangle(vis, (x1, y1), (x2, y2), color, 3)
+        label = f"{name} {det['confidence']:.2f}"
+        (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+        cv2.rectangle(vis, (x1, y1 - th - 6), (x1 + tw + 4, y1), color, -1)
+        cv2.putText(vis, label, (x1 + 2, y1 - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+    return vis
+
+
+def _img_to_base64(img):
+    _, buf = cv2.imencode('.jpg', img, [cv2.IMWRITE_JPEG_QUALITY, 90])
+    return base64.b64encode(buf).decode('utf-8')
+
+
 def _recognize_image(img, filename):
     start_time = time.time()
     try:
-        ocr_items = recognize(img)
-        full_text = get_full_text(ocr_items)
-        parsed = parse_invoice(ocr_items, full_text)
+        detector = get_current_detector()
+        print(f"[调试] detector类型: {type(detector).__name__ if detector else 'None'}")
+        
+        detected_fields = []
+        vis_img = None
+        detections = []
+
+        # 阶段1: 目标检测（PyTorch）
+        if detector is not None:
+            try:
+                detections = detect_fields(img)
+                detected_fields = [d['class_name'] for d in detections]
+                print(f"[检测] {filename}: 检测到 {len(detections)} 个字段 -> {detected_fields}")
+                if detections:
+                    vis_img = _draw_detections(img, detections)
+                    print(f"[调试] vis_img形状: {vis_img.shape}")
+                else:
+                    print(f"[调试] 检测结果为空，不画框")
+            except Exception as e:
+                print(f"[检测] {filename}: 检测失败，降级到纯OCR: {e}")
+                import traceback
+                traceback.print_exc()
+                detections = []
+        else:
+            print(f"[调试] 检测模型未加载，使用纯OCR")
+
+        # 阶段2: OCR识别（PaddlePaddle）
+        if detections:
+            ocr_items = []
+            for det in detections:
+                try:
+                    x1, y1, x2, y2 = [int(v) for v in det['bbox']]
+                    x1, y1 = max(0, x1), max(0, y1)
+                    x2, y2 = min(img.shape[1], x2), min(img.shape[0], y2)
+                    if x2 <= x1 or y2 <= y1:
+                        continue
+                    crop = img[y1:y2, x1:x2]
+                    crop_ocr = recognize(crop)
+                    for item in crop_ocr:
+                        item['field_name'] = det['class_name']
+                    ocr_items.extend(crop_ocr)
+                except Exception as e:
+                    print(f"[OCR裁剪] {det['class_name']} 识别失败: {e}")
+                    continue
+
+            full_text = get_full_text(ocr_items)
+            parsed = parse_invoice(ocr_items, full_text)
+            parsed['detected_fields'] = detected_fields
+        else:
+            ocr_items = recognize(img)
+            full_text = get_full_text(ocr_items)
+            parsed = parse_invoice(ocr_items, full_text)
+
         parsed['filename'] = filename
         parsed['raw_text'] = full_text
         parsed['duration'] = round(time.time() - start_time, 2)
+
+        if vis_img is not None:
+            parsed['preview_image'] = _img_to_base64(vis_img)
+            print(f"[调试] preview_image已生成，长度: {len(parsed['preview_image'])}")
+        else:
+            print(f"[调试] preview_image未生成（vis_img为None）")
+
+        print(f"[完成] {filename}: 耗时 {parsed['duration']}s")
         return parsed
     except Exception as e:
+        print(f"[错误] {filename}: {e}")
+        import traceback
+        traceback.print_exc()
         return {
             'filename': filename,
             'error': str(e),
@@ -192,6 +284,7 @@ def batch_export():
     return send_file(filepath, as_attachment=True, download_name=export_name,
                      mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
+
 @invoice_bp.route('/switch-engine', methods=['POST'])
 def switch_engine():
     data = request.get_json()
@@ -213,4 +306,30 @@ def current_engine():
         'success': True,
         'current': get_current_engine(),
         'available': get_available_engines(),
+    })
+
+
+@invoice_bp.route('/switch-detector', methods=['POST'])
+def switch_detector_route():
+    data = request.get_json()
+    detector = data.get('detector', 'none')
+    try:
+        from services.detector_manager import switch_detector as _switch_detector
+        _switch_detector(detector)
+        return jsonify({'success': True, 'detector': detector})
+    except ValueError as e:
+        return jsonify({'success': False, 'message': str(e)}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'切换检测模型失败: {str(e)}'}), 500
+
+
+@invoice_bp.route('/current-detector', methods=['GET'])
+def current_detector():
+    name = get_current_detector()
+    if not name or name == 'none':
+        name = 'none'
+    return jsonify({
+        'success': True,
+        'current': name,
+        'available': VALID_DETECTORS,
     })
