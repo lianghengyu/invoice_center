@@ -9,3 +9,10 @@ exports/
 model/
 test_ocr.py
 test.py
+runs/
+saved_results/*.pth # 模型权重
+# YOLO数据集缓存
+*.cache
+# 数据集图片和标注
+data/yolov8/images/
+data/yolov8/labels/
