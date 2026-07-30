@@ -9,6 +9,7 @@ def preprocess(image_path):
         raise ValueError(f"无法读取图片: {image_path}")
 
     img = _resize_if_needed(img, max_side=2000)
+
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     angle = _detect_skew_angle(gray)
     if abs(angle) > 0.5:

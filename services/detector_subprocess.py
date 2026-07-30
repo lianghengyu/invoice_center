@@ -5,7 +5,7 @@ import base64
 import numpy as np
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-YOLOV8_MODEL = os.path.join(BASE_DIR, "saved_results/yolov8_model/invoice_detect-3/weights/best.pt")
+YOLOV8_MODEL = os.path.join(BASE_DIR, "saved_results/yolov8_model/invoice_detect/weights/best.pt")
 FASTERRCNN_MODEL = os.path.join(BASE_DIR, "saved_results/fasterrcnn_model/best.pth")
 
 CLASS_NAMES = [

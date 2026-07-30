@@ -29,7 +29,6 @@ BOX_COLORS = {
 def _allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-
 def _draw_detections(img, detections):
     from PIL import Image, ImageDraw, ImageFont
     vis = img.copy()

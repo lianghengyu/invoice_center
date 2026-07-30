@@ -10,15 +10,20 @@ CLASS_NAMES = [
     '价税合计', '增值税电子普通发票',
 ]
 
-model = YOLO('saved_results/yolov8_model/invoice_detect-3/weights/best.pt')
+model = YOLO(os.path.join(BASE_DIR, "saved_results/yolov8_model/invoice_detect/weights/best.pt"))
 
-img_dir = os.path.join(BASE_DIR, "data")
-img_files = sorted(
-    glob.glob(os.path.join(img_dir, "0*.png"))
-    + glob.glob(os.path.join(img_dir, "0*.jpg"))
-    + glob.glob(os.path.join(img_dir, "b*.jpg"))
-    + glob.glob(os.path.join(img_dir, "b*.png"))
-)
+IMG_DIRS = [
+    os.path.join(BASE_DIR, "data/normal"),
+    os.path.join(BASE_DIR, "data/special"),
+    os.path.join(BASE_DIR, "data/synthetic"),
+    os.path.join(BASE_DIR, "data/synthetic_v2"),
+]
+
+img_files = []
+for d in IMG_DIRS:
+    for ext in ['*.png', '*.jpg', '*.jpeg']:
+        img_files.extend(glob.glob(os.path.join(d, ext)))
+img_files = sorted(set(img_files))
 
 print(f"共找到 {len(img_files)} 张图片\n")
 

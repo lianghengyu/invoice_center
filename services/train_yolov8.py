@@ -21,6 +21,7 @@ def main():
         project=MODEL_SAVE,
         patience=20,
         device="cpu",
+        exist_ok=True,
     )
 
     print(f"\n训练完成！模型保存在: {MODEL_SAVE}/invoice_detect/weights/best.pt")
