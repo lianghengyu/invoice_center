@@ -1,0 +1,154 @@
+{
+  "version": "6.3.1",
+  "flags": {},
+  "shapes": [
+    {
+      "label": "发票",
+      "points": [
+        [
+          13.870370370370384,
+          2.2777777777778114
+        ],
+        [
+          1003.6851851851852,
+          621.7222222222222
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "增值税电子普通发票",
+      "points": [
+        [
+          394.4259259259259,
+          24.500000000000032
+        ],
+        [
+          698.1296296296297,
+          77.2777777777778
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "发票代码",
+      "points": [
+        [
+          788.8703703703704,
+          7.833333333333366
+        ],
+        [
+          937.9444444444445,
+          40.240740740740776
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "发票号码",
+      "points": [
+        [
+          788.8703703703704,
+          40.240740740740776
+        ],
+        [
+          974.0555555555555,
+          71.72222222222224
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "发票日期",
+      "points": [
+        [
+          788.8703703703704,
+          71.72222222222224
+        ],
+        [
+          975.9074074074074,
+          100.42592592592595
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "购买方名称",
+      "points": [
+        [
+          175.9074074074074,
+          138.3888888888889
+        ],
+        [
+          360.16666666666663,
+          161.53703703703707
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "购买方纳税人税别号",
+      "points": [
+        [
+          175.9074074074074,
+          163.3888888888889
+        ],
+        [
+          480.537037037037,
+          189.31481481481484
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "价税合计",
+      "points": [
+        [
+          799.0555555555555,
+          452.2777777777778
+        ],
+        [
+          912.0185185185185,
+          480.0555555555556
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    }
+  ],
+  "imagePath": "019.jpg",
+  "imageData": null,
+  "imageHeight": 649,
+  "imageWidth": 1012
+}
