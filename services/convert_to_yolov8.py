@@ -16,9 +16,11 @@ CLASS_NAMES = [
     '购买方纳税人识别号',
     '价税合计',
     '增值税电子普通发票',
+    '发票',
 ]
 
 LABEL_MAP = {
+    '发票': 7,
     '发票代码': 0,
     '发票号码': 1,
     '发票日期': 2,
@@ -27,6 +29,8 @@ LABEL_MAP = {
     '价税合计': 5,
     '增值税电子普通发票': 6,
     '电子普通发票': 6,
+    '增值税专用发票': 6,
+    '增值税普通发票': 6,
 }
 
 JSON_DIR = os.path.join(BASE_DIR, "data/labelsJson")
@@ -154,7 +158,7 @@ def convert_one(json_path):
 
 def main():
     import sys
-    source = sys.argv[1] if len(sys.argv) > 1 else 'txt'
+    source = sys.argv[1] if len(sys.argv) > 1 else 'json'
 
     if source == 'json':
         label_files = sorted(glob.glob(os.path.join(JSON_DIR, "*.json")))
@@ -164,8 +168,8 @@ def main():
         fmt = 'txt'
     else:
         print(f"用法: python convert_to_yolov8.py [json|txt]")
-        print(f"  json - 使用 {JSON_DIR} 下的 labelme JSON 标注")
-        print(f"  txt  - 使用 {TXT_DIR} 下的 YOLO TXT 标注（默认）")
+        print(f"  json - 使用 {JSON_DIR} 下的 labelme JSON 标注（默认）")
+        print(f"  txt  - 使用 {TXT_DIR} 下的 YOLO TXT 标注")
         return
 
     print(f"标注源: {fmt.upper()} 共 {len(label_files)} 个文件")

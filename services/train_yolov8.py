@@ -4,7 +4,7 @@ from ultralytics import YOLO
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 YOLO_DIR = os.path.join(BASE_DIR, "data/yolov8")
 YAML_PATH = os.path.join(YOLO_DIR, "invoice.yaml")
-MODEL_SAVE = os.path.join(BASE_DIR, "saved_results/yolov8_model")
+MODEL_SAVE = os.path.join(BASE_DIR, "model/yolov8")
 
 
 def main():
@@ -14,12 +14,12 @@ def main():
 
     results = model.train(
         data=YAML_PATH,
-        epochs=100,
+        epochs=200,
         imgsz=640,
         batch=8,
         name="invoice_detect",
         project=MODEL_SAVE,
-        patience=20,
+        patience=30,
         device="cpu",
         exist_ok=True,
     )

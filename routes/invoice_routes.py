@@ -36,10 +36,20 @@ def _draw_detections(img, detections):
     pil_img = Image.fromarray(vis_rgb)
     draw = ImageDraw.Draw(pil_img)
 
-    font_path = "/System/Library/Fonts/PingFang.ttc"
-    try:
-        font = ImageFont.truetype(font_path, 16)
-    except:
+    font = None
+    for font_path in [
+        "/System/Library/Fonts/STHeiti Medium.ttc",
+        "/System/Library/Fonts/PingFang.ttc",
+        "/System/Library/Fonts/Hiragino Sans GB.ttc",
+        "/Library/Fonts/Arial Unicode.ttf",
+        "/System/Library/Fonts/Supplemental/Songti.ttc",
+    ]:
+        try:
+            font = ImageFont.truetype(font_path, 16)
+            break
+        except:
+            continue
+    if font is None:
         font = ImageFont.load_default()
 
     for det in detections:
@@ -101,6 +111,8 @@ def _recognize_image(img, filename):
         if detections:
             ocr_items = []
             for det in detections:
+                if det['class_name'] == '发票':
+                    continue
                 try:
                     x1, y1, x2, y2 = [int(v) for v in det['bbox']]
                     x1, y1 = max(0, x1), max(0, y1)

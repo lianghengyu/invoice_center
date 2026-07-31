@@ -224,39 +224,9 @@
                                             </div>
                                         </div>
                                         <div class="field-row">
-                                            <div class="field-label">销售方名称</div>
-                                            <div class="field-value" :class="{missing: !currentResult.seller_name}">
-                                                <input type="text" :value="currentResult.seller_name || ''" readonly>
-                                            </div>
-                                        </div>
-                                        <div class="field-row">
-                                            <div class="field-label">销售方税号</div>
-                                            <div class="field-value" :class="{missing: !currentResult.seller_tax_id, warn: currentResult.seller_tax_id && currentResult.seller_tax_id.length !== 18}">
-                                                <input type="text" :value="currentResult.seller_tax_id || ''" readonly>
-                                            </div>
-                                        </div>
-                                        <div class="field-row">
-                                            <div class="field-label">不含税金额</div>
-                                            <div class="field-value" :class="{missing: !currentResult.amount}">
-                                                <input type="text" :value="currentResult.amount || ''" readonly>
-                                            </div>
-                                        </div>
-                                        <div class="field-row">
-                                            <div class="field-label">税额</div>
-                                            <div class="field-value" :class="{missing: !currentResult.tax_amount}">
-                                                <input type="text" :value="currentResult.tax_amount || ''" readonly>
-                                            </div>
-                                        </div>
-                                        <div class="field-row">
                                             <div class="field-label">价税合计</div>
                                             <div class="field-value money" :class="{missing: !currentResult.total_amount}">
                                                 <input type="text" :value="currentResult.total_amount ? '¥ ' + currentResult.total_amount : ''" readonly>
-                                            </div>
-                                        </div>
-                                        <div class="field-row">
-                                            <div class="field-label">校验码</div>
-                                            <div class="field-value" :class="{missing: !currentResult.check_code}">
-                                                <input type="text" :value="currentResult.check_code || ''" readonly>
                                             </div>
                                         </div>
                                         <div class="field-row">

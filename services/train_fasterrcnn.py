@@ -9,13 +9,14 @@ from torch.utils.data import DataLoader
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "data/fasterrcnn")
-MODEL_SAVE = os.path.join(BASE_DIR, "saved_results/fasterrcnn_model")
+MODEL_SAVE = os.path.join(BASE_DIR, "model/fasterrcnn")
 
 CLASS_NAMES = [
     '__background__',
     '发票代码', '发票号码', '发票日期',
     '购买方名称', '购买方纳税人识别号',
     '价税合计', '增值税电子普通发票',
+    '发票',
 ]
 
 
@@ -71,7 +72,10 @@ def main():
 
     device = torch.device('cpu')
     print(f"使用设备: {device}")
+
+    print("正在加载模型...")
     model = fasterrcnn_resnet50_fpn(weights=None, num_classes=len(CLASS_NAMES))
+    print("模型加载完成")
     model.to(device)
 
     params = [p for p in model.parameters() if p.requires_grad]
@@ -85,7 +89,7 @@ def main():
         model.train()
         epoch_loss = 0
 
-        for images, targets in train_loader:
+        for i, (images, targets) in enumerate(train_loader):
             images = [img.to(device) for img in images]
             targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
@@ -102,6 +106,9 @@ def main():
             optimizer.step()
 
             epoch_loss += losses.item()
+
+            if (i + 1) % 5 == 0 or (i + 1) == len(train_loader):
+                print(f"  Epoch {epoch+1} [{i+1}/{len(train_loader)}] batch_loss: {losses.item():.4f}")
 
         lr_scheduler.step()
         avg_loss = epoch_loss / len(train_loader)
