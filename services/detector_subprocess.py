@@ -23,17 +23,18 @@ def run_yolov8(image_b64):
     img = cv2.imdecode(img, cv2.IMREAD_COLOR)
 
     model = YOLO(YOLOV8_MODEL)
+    model_names = model.names
     results = model.predict(img, verbose=False, conf=0.3)
 
     detections = []
     for r in results:
         for box in r.boxes:
             cls_id = int(box.cls[0])
-            if cls_id >= len(CLASS_NAMES):
+            if cls_id >= len(model_names):
                 continue
             detections.append({
                 'class_id': cls_id,
-                'class_name': CLASS_NAMES[cls_id],
+                'class_name': model_names[cls_id],
                 'confidence': float(box.conf[0]),
                 'bbox': [float(v) for v in box.xyxy[0].tolist()],
             })

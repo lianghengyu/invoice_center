@@ -15,7 +15,7 @@ def main():
     results = model.train(
         data=YAML_PATH,
         epochs=200,
-        imgsz=640,
+        imgsz=800,
         batch=8,
         name="invoice_detect",
         project=MODEL_SAVE,
