@@ -12,13 +12,6 @@ VALID_DETECTORS = ['yolov8', 'fasterrcnn', 'none']
 
 SUBPROCESS_SCRIPT = os.path.join(BASE_DIR, "services", "detector_subprocess.py")
 
-CLASS_NAMES = [
-    '发票代码', '发票号码', '发票日期',
-    '购买方名称', '购买方纳税人识别号',
-    '价税合计', '增值税电子普通发票',
-]
-
-
 def get_current_detector():
     return _current_detector_name
 
