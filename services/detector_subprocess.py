@@ -6,7 +6,7 @@ import numpy as np
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 YOLOV8_MODEL = os.path.join(BASE_DIR, "model/yolov8/invoice_detect/weights/best.pt")
-FASTERRCNN_MODEL = os.path.join(BASE_DIR, "saved_results/fasterrcnn_model/best.pth")
+FASTERRCNN_MODEL = os.path.join(BASE_DIR, "model/fasterrcnn/best.pth")
 
 
 def run_yolov8(image_b64):
@@ -27,7 +27,6 @@ def run_yolov8(image_b64):
             if cls_id >= len(model_names):
                 continue
             detections.append({
-                'class_id': cls_id,
                 'class_name': model_names[cls_id],
                 'confidence': float(box.conf[0]),
                 'bbox': [float(v) for v in box.xyxy[0].tolist()],
