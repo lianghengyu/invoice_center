@@ -6,17 +6,18 @@ import numpy as np
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 YOLOV8_MODEL = os.path.join(BASE_DIR, "model/yolov8/invoice_detect/weights/best.pt")
+YOLOV10_MODEL = os.path.join(BASE_DIR, "model/yolov10/yolo_invoice_v7/weights/best.pt")
 FASTERRCNN_MODEL = os.path.join(BASE_DIR, "model/fasterrcnn/best.pth")
 
 
-def run_yolov8(image_b64):
+def _run_yolo_model(model_path, image_b64):
     import cv2
     from ultralytics import YOLO
     img_bytes = base64.b64decode(image_b64)
     img = np.frombuffer(img_bytes, dtype=np.uint8)
     img = cv2.imdecode(img, cv2.IMREAD_COLOR)
 
-    model = YOLO(YOLOV8_MODEL)
+    model = YOLO(model_path)
     model_names = model.names
     results = model.predict(img, verbose=False, conf=0.3)
 
@@ -32,6 +33,14 @@ def run_yolov8(image_b64):
                 'bbox': [float(v) for v in box.xyxy[0].tolist()],
             })
     return detections
+
+
+def run_yolov8(image_b64):
+    return _run_yolo_model(YOLOV8_MODEL, image_b64)
+
+
+def run_yolov10(image_b64):
+    return _run_yolo_model(YOLOV10_MODEL, image_b64)
 
 
 def run_fasterrcnn(image_b64):
@@ -83,6 +92,8 @@ if __name__ == '__main__':
 
     if mode == 'yolov8':
         result = run_yolov8(image_b64)
+    elif mode == 'yolov10':
+        result = run_yolov10(image_b64)
     elif mode == 'fasterrcnn':
         result = run_fasterrcnn(image_b64)
     else:

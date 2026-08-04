@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 _current_detector_name = 'none'
 
-VALID_DETECTORS = ['yolov8', 'fasterrcnn', 'none']
+VALID_DETECTORS = ['yolov8', 'yolov10', 'fasterrcnn', 'none']
 
 SUBPROCESS_SCRIPT = os.path.join(BASE_DIR, "services", "detector_subprocess.py")
 
