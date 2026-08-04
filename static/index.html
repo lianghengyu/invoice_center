@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>发票识别系统</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.9.1/dist/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; padding: 0; background: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; color: #1d2129; }
@@ -68,6 +69,30 @@
             .main-layout { flex-direction: column; }
             .left-panel, .right-panel { min-height: auto; }
             .toolbar-stats { border-left: none; padding-left: 0; }
+        }
+        /* 报表样式 */
+        .report-container { padding: 16px 0; }
+        .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.06); text-align: center; transition: transform .2s, box-shadow .2s; }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+        .stat-card .stat-value { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+        .stat-card .stat-label { font-size: 13px; color: #86909c; }
+        .stat-card.blue .stat-value { color: #409eff; }
+        .stat-card.green .stat-value { color: #67c23a; }
+        .stat-card.orange .stat-value { color: #e6a23c; }
+        .stat-card.purple .stat-value { color: #9b59b6; }
+        .stat-card.cyan .stat-value { color: #00bcd4; }
+        .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        .chart-box { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+        .chart-box .chart-title { font-size: 14px; font-weight: 600; color: #1d2129; margin-bottom: 12px; }
+        .chart-box .chart-area { width: 100%; height: 320px; }
+        .chart-full { grid-column: 1 / -1; }
+        .annotation-section { background: #fff; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.06); margin-bottom: 24px; }
+        .annotation-section .section-title { font-size: 15px; font-weight: 600; color: #1d2129; margin-bottom: 16px; }
+        .annotation-result { margin-top: 16px; }
+        .annotation-result .accuracy-big { font-size: 36px; font-weight: 700; color: #409eff; }
+        @media (max-width: 1100px) {
+            .chart-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -284,6 +309,114 @@
                         </el-table>
                     </div>
                 </el-tab-pane>
+
+                <el-tab-pane name="report" label="数据报表">
+                    <div class="report-container">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                            <span style="font-size:15px;font-weight:600;color:#1d2129">📊 识别数据报表</span>
+                            <div style="display:flex;gap:8px">
+                                <el-button size="small" @click="loadReportData" :loading="reportLoading">
+                                    <el-icon style="margin-right:4px"><refresh></refresh></el-icon>刷新
+                                </el-button>
+                                <el-button size="small" type="primary" @click="exportReport">
+                                    <el-icon style="margin-right:4px"><download></download></el-icon>导出 Excel 报表
+                                </el-button>
+                            </div>
+                        </div>
+
+                        <div v-if="reportData">
+                            <!-- 统计卡片 -->
+                            <div class="stat-cards">
+                                <div class="stat-card blue">
+                                    <div class="stat-value">{{ reportData.overview.total_images }}</div>
+                                    <div class="stat-label">总识别图片数</div>
+                                </div>
+                                <div class="stat-card green">
+                                    <div class="stat-value">{{ reportData.overview.success_count }}</div>
+                                    <div class="stat-label">识别成功数</div>
+                                </div>
+                                <div class="stat-card orange">
+                                    <div class="stat-value">{{ reportData.overview.success_rate }}%</div>
+                                    <div class="stat-label">识别成功率</div>
+                                </div>
+                                <div class="stat-card purple">
+                                    <div class="stat-value">{{ reportData.overview.avg_duration }}s</div>
+                                    <div class="stat-label">平均识别耗时</div>
+                                </div>
+                                <div class="stat-card cyan">
+                                    <div class="stat-value">{{ reportData.overview.batch_count }}</div>
+                                    <div class="stat-label">识别批次数</div>
+                                </div>
+                            </div>
+
+                            <!-- 图表区域 -->
+                            <div class="chart-grid">
+                                <div class="chart-box">
+                                    <div class="chart-title">各字段识别率</div>
+                                    <div class="chart-area" id="chart-field-rate"></div>
+                                </div>
+                                <div class="chart-box">
+                                    <div class="chart-title">发票类型分布</div>
+                                    <div class="chart-area" id="chart-type-dist"></div>
+                                </div>
+                                <div class="chart-box chart-full">
+                                    <div class="chart-title">识别趋势（近30天）</div>
+                                    <div class="chart-area" id="chart-trend"></div>
+                                </div>
+                                <div class="chart-box chart-full" v-if="reportData.engine_comparison && reportData.engine_comparison.length > 0">
+                                    <div class="chart-title">OCR 引擎对比</div>
+                                    <div class="chart-area" id="chart-engine"></div>
+                                </div>
+                            </div>
+
+                            <!-- 人工标注对比 -->
+                            <div class="annotation-section">
+                                <div class="section-title">🎯 人工标注对比（精确准确率）</div>
+                                <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+                                    <el-select v-model="annotationBatchId" placeholder="选择批次" size="default" style="width:280px" clearable>
+                                        <el-option v-for="b in reportBatches" :key="b.id"
+                                            :label="b.created_at + ' (' + b.total_count + '张)'"
+                                            :value="b.id"></el-option>
+                                    </el-select>
+                                    <el-upload :auto-upload="false" :show-file-list="false" accept=".xlsx"
+                                        :on-change="onAnnotationFileChange">
+                                        <el-button type="warning" :disabled="!annotationBatchId">
+                                            <el-icon style="margin-right:4px"><upload-filled></upload-filled></el-icon>上传标注 Excel
+                                        </el-button>
+                                    </el-upload>
+                                    <el-button @click="loadAnnotationCompare" :disabled="!annotationBatchId">查看对比结果</el-button>
+                                </div>
+                                <div class="annotation-result" v-if="annotationResult && annotationResult.total > 0">
+                                    <div style="display:flex;align-items:baseline;gap:16px;margin-bottom:12px">
+                                        <span class="accuracy-big">{{ annotationResult.accuracy }}%</span>
+                                        <span style="color:#86909c;font-size:13px">字段级准确率（{{ annotationResult.correct }} / {{ annotationResult.total }} 字段匹配）</span>
+                                    </div>
+                                    <div class="chart-area" id="chart-annotation-field" style="height:260px"></div>
+                                    <el-table :data="annotationResult.details" stripe size="small" style="margin-top:16px" max-height="300">
+                                        <el-table-column prop="filename" label="文件名" width="200"></el-table-column>
+                                        <el-table-column label="字段对比" min-width="400">
+                                            <template #default="scope">
+                                                <span v-for="(info, field) in scope.row.fields" :key="field"
+                                                    style="display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;border-radius:4px;font-size:12px"
+                                                    :style="{background: info.match ? '#f0f9eb' : '#fef0f0', color: info.match ? '#67c23a' : '#f56c6c'}">
+                                                    {{ reportData.field_labels[field] || field }}: {{ info.match ? '✓' : '✗' }}
+                                                </span>
+                                            </template>
+                                        </el-table-column>
+                                    </el-table>
+                                </div>
+                                <div v-else-if="annotationResult && annotationResult.total === 0" style="margin-top:16px;color:#86909c;font-size:13px">
+                                    暂无对比数据，请先上传标注 Excel（需包含"文件名"列及各字段列）
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-else style="text-align:center;padding:80px 0;color:#86909c">
+                            <el-icon style="font-size:48px;color:#dcdfe6"><data-line></data-line></el-icon>
+                            <p>暂无报表数据，请先在「图片识别」页面进行发票识别</p>
+                        </div>
+                    </div>
+                </el-tab-pane>
             </el-tabs>
         </div>
 
@@ -310,6 +443,12 @@
                 savedLoading: false,
                 ocrEngine: 'paddle',
                 detectorModel: 'yolov8',
+                // 报表相关
+                reportData: null,
+                reportLoading: false,
+                reportBatches: [],
+                annotationBatchId: '',
+                annotationResult: null,
             };
         },
         computed: {
@@ -347,6 +486,9 @@
             activeTab: function(val) {
                 if (val === 'batch') {
                     this.loadSavedFiles();
+                }
+                if (val === 'report') {
+                    this.loadReportData();
                 }
             }
         },
@@ -566,6 +708,204 @@
                     ElementPlus.ElMessage.error('切换失败: ' + err.message);
                     this.detectorModel = 'none';
                 }
+            },
+            // ========== 报表相关 ==========
+            loadReportData: async function() {
+                this.reportLoading = true;
+                try {
+                    var resp = await fetch('/api/report/stats');
+                    var data = await resp.json();
+                    if (data.success) {
+                        this.reportData = data;
+                        this.$nextTick(this.renderCharts);
+                    }
+                    var resp2 = await fetch('/api/report/batches');
+                    var data2 = await resp2.json();
+                    if (data2.success) {
+                        this.reportBatches = data2.batches;
+                    }
+                } catch (err) {
+                    ElementPlus.ElMessage.error('加载报表数据失败');
+                } finally {
+                    this.reportLoading = false;
+                }
+            },
+            renderCharts: function() {
+                var self = this;
+                if (!this.reportData) return;
+
+                // 字段识别率柱状图
+                var fieldEl = document.getElementById('chart-field-rate');
+                if (fieldEl) {
+                    var fieldChart = echarts.init(fieldEl);
+                    var labels = [];
+                    var values = [];
+                    var fieldRates = this.reportData.field_rates;
+                    var fieldLabels = this.reportData.field_labels;
+                    for (var key in fieldRates) {
+                        labels.push(fieldLabels[key] || key);
+                        values.push(fieldRates[key]);
+                    }
+                    fieldChart.setOption({
+                        tooltip: { trigger: 'axis' },
+                        grid: { left: 80, right: 20, top: 20, bottom: 40 },
+                        xAxis: { type: 'value', max: 100, axisLabel: { formatter: '{value}%' } },
+                        yAxis: { type: 'category', data: labels, axisLabel: { fontSize: 11 } },
+                        series: [{
+                            type: 'bar',
+                            data: values,
+                            itemStyle: {
+                                color: function(params) {
+                                    var v = params.value;
+                                    if (v >= 80) return '#67c23a';
+                                    if (v >= 50) return '#e6a23c';
+                                    return '#f56c6c';
+                                }
+                            },
+                            label: { show: true, position: 'right', formatter: '{c}%', fontSize: 11 }
+                        }]
+                    });
+                }
+
+                // 发票类型饼图
+                var typeEl = document.getElementById('chart-type-dist');
+                if (typeEl) {
+                    var typeChart = echarts.init(typeEl);
+                    typeChart.setOption({
+                        tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+                        legend: { orient: 'vertical', right: 10, top: 'center', textStyle: { fontSize: 11 } },
+                        series: [{
+                            type: 'pie',
+                            radius: ['40%', '70%'],
+                            center: ['40%', '50%'],
+                            avoidLabelOverlap: true,
+                            itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+                            label: { show: false },
+                            emphasis: { label: { show: true, fontSize: 14, fontWeight: 'bold' } },
+                            data: this.reportData.type_distribution
+                        }]
+                    });
+                }
+
+                // 趋势折线图
+                var trendEl = document.getElementById('chart-trend');
+                if (trendEl) {
+                    var trendChart = echarts.init(trendEl);
+                    var dates = this.reportData.daily_trend.map(function(d) { return d.date; });
+                    var totals = this.reportData.daily_trend.map(function(d) { return d.total; });
+                    var successes = this.reportData.daily_trend.map(function(d) { return d.success; });
+                    trendChart.setOption({
+                        tooltip: { trigger: 'axis' },
+                        legend: { data: ['总数', '成功数'], top: 0 },
+                        grid: { left: 50, right: 30, top: 40, bottom: 30 },
+                        xAxis: { type: 'category', data: dates, axisLabel: { fontSize: 11 } },
+                        yAxis: { type: 'value', minInterval: 1 },
+                        series: [
+                            { name: '总数', type: 'line', data: totals, smooth: true, areaStyle: { opacity: 0.1 }, lineStyle: { width: 2 }, itemStyle: { color: '#409eff' } },
+                            { name: '成功数', type: 'line', data: successes, smooth: true, areaStyle: { opacity: 0.1 }, lineStyle: { width: 2 }, itemStyle: { color: '#67c23a' } }
+                        ]
+                    });
+                }
+
+                // OCR 引擎对比
+                var engineEl = document.getElementById('chart-engine');
+                if (engineEl && this.reportData.engine_comparison && this.reportData.engine_comparison.length > 0) {
+                    var engineChart = echarts.init(engineEl);
+                    var engines = this.reportData.engine_comparison.map(function(e) { return e.engine; });
+                    var rates = this.reportData.engine_comparison.map(function(e) { return e.rate; });
+                    var durations = this.reportData.engine_comparison.map(function(e) { return e.avg_duration; });
+                    engineChart.setOption({
+                        tooltip: { trigger: 'axis' },
+                        legend: { data: ['成功率(%)', '平均耗时(s)'], top: 0 },
+                        grid: { left: 60, right: 60, top: 40, bottom: 30 },
+                        xAxis: { type: 'category', data: engines },
+                        yAxis: [
+                            { type: 'value', name: '成功率(%)', max: 100 },
+                            { type: 'value', name: '耗时(s)', position: 'right' }
+                        ],
+                        series: [
+                            { name: '成功率(%)', type: 'bar', data: rates, itemStyle: { color: '#409eff' }, barWidth: 40 },
+                            { name: '平均耗时(s)', type: 'bar', yAxisIndex: 1, data: durations, itemStyle: { color: '#e6a23c' }, barWidth: 40 }
+                        ]
+                    });
+                }
+            },
+            onAnnotationFileChange: async function(file) {
+                if (!this.annotationBatchId) {
+                    ElementPlus.ElMessage.warning('请先选择要对比的批次');
+                    return;
+                }
+                var fd = new FormData();
+                fd.append('file', file.raw);
+                fd.append('batch_id', this.annotationBatchId);
+                try {
+                    var resp = await fetch('/api/report/annotation/upload', { method: 'POST', body: fd });
+                    var data = await resp.json();
+                    if (data.success) {
+                        ElementPlus.ElMessage.success(data.message);
+                        this.annotationResult = data.comparison;
+                        this.$nextTick(this.renderAnnotationChart);
+                    } else {
+                        ElementPlus.ElMessage.error(data.message || '上传失败');
+                    }
+                } catch (err) {
+                    ElementPlus.ElMessage.error('上传失败: ' + err.message);
+                }
+            },
+            loadAnnotationCompare: async function() {
+                try {
+                    var resp = await fetch('/api/report/annotation/compare?batch_id=' + encodeURIComponent(this.annotationBatchId));
+                    var data = await resp.json();
+                    if (data.success) {
+                        this.annotationResult = data.comparison;
+                        this.$nextTick(this.renderAnnotationChart);
+                    }
+                } catch (err) {
+                    ElementPlus.ElMessage.error('加载对比数据失败');
+                }
+            },
+            renderAnnotationChart: function() {
+                if (!this.annotationResult || !this.annotationResult.field_accuracy) return;
+                var el = document.getElementById('chart-annotation-field');
+                if (!el) return;
+                var chart = echarts.init(el);
+                var fieldLabels = this.reportData ? this.reportData.field_labels : {};
+                var labels = [];
+                var values = [];
+                var fa = this.annotationResult.field_accuracy;
+                for (var key in fa) {
+                    if (fa[key] !== null) {
+                        labels.push(fieldLabels[key] || key);
+                        values.push(fa[key]);
+                    }
+                }
+                chart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    grid: { left: 80, right: 30, top: 10, bottom: 30 },
+                    xAxis: { type: 'value', max: 100, axisLabel: { formatter: '{value}%' } },
+                    yAxis: { type: 'category', data: labels, axisLabel: { fontSize: 11 } },
+                    series: [{
+                        type: 'bar',
+                        data: values,
+                        itemStyle: {
+                            color: function(params) {
+                                var v = params.value;
+                                if (v >= 90) return '#67c23a';
+                                if (v >= 70) return '#e6a23c';
+                                return '#f56c6c';
+                            }
+                        },
+                        label: { show: true, position: 'right', formatter: '{c}%', fontSize: 11 }
+                    }]
+                });
+            },
+            exportReport: function() {
+                var a = document.createElement('a');
+                a.href = '/api/report/export';
+                a.download = '识别报表.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
             },
         }
     });

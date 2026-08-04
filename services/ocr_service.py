@@ -73,7 +73,7 @@ def _get_ocr():
         _ensure_models()  # 确保模型存在
         _ocr_instance = PaddleOCR(
             #lang='ch',
-            use_doc_orientation_classify=False,
+            use_doc_orientation_classify=True,
             use_doc_unwarping=False,
             use_textline_orientation=True,
             text_detection_model_dir=os.path.join(MODEL_PATH, 'PP-OCRv6_medium_det_infer'),

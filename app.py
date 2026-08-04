@@ -1,6 +1,7 @@
 from flask import Flask
 from config import MAX_CONTENT_LENGTH
 from routes.invoice_routes import invoice_bp
+from routes.report_routes import report_bp
 from services.ocr_manager import switch_engine
 from config import DEFAULT_OCR_ENGINE
 
@@ -10,6 +11,7 @@ def create_app():
     app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
     app.register_blueprint(invoice_bp)
+    app.register_blueprint(report_bp)
 
     @app.route('/')
     def index():

@@ -12,6 +12,7 @@ from services.ocr_manager import recognize, get_full_text, get_current_engine
 from services.detector_manager import detect_fields, get_current_detector, VALID_DETECTORS
 from services.invoice_parser import parse_invoice
 from services.excel_exporter import export_to_excel, DEFAULT_FILENAME
+from services.report_service import create_batch, record_recognition
 
 invoice_bp = Blueprint('invoice', __name__, url_prefix='/api/invoice')
 
@@ -197,6 +198,14 @@ def recognize_invoices():
         finally:
             if os.path.exists(saved_path):
                 os.remove(saved_path)
+
+    # 记录到报表数据库
+    ocr_engine = get_current_engine()
+    detector_name = get_current_detector() or 'none'
+    success_count = len([r for r in results if 'error' not in r])
+    batch_id = create_batch(len(results), success_count, ocr_engine, detector_name)
+    for r in results:
+        record_recognition(batch_id, r)
 
     return jsonify({'success': True, 'results': results})
 

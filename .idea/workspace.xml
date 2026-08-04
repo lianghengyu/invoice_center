@@ -4,8 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="bebe37c2-8947-467e-b4c8-43640673906b" name="更改" comment="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动及设置脚本，并更新了项目依赖文件以支持不同平台的需求。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;">
+    <list default="true" id="bebe37c2-8947-467e-b4c8-43640673906b" name="更改" comment="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的说明，并提供了降级至3.2.2版本的解决方案。同时确认了项目依赖文件中已固定该版本号。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/invoice_routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/routes/invoice_routes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/ocr_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/ocr_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -84,7 +88,15 @@
       <option name="project" value="LOCAL" />
       <updated>1785203323514</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的说明，并提供了降级至3.2.2版本的解决方案。同时确认了项目依赖文件中已固定该版本号。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;">
+      <option name="closed" value="true" />
+      <created>1785214627693</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1785214627693</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -139,13 +151,22 @@
     <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle和torch各自携带libomp而导致的段错误问题。同时优化了ocr_manager" />
     <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle和torch各自携带libomp而导致的段错误问题。同时优化了ocr_manager中的引擎切换逻辑，增加了异常处理" />
     <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle和torch各自携带libomp而导致的段错误问题。同时优化了ocr_manager中的引擎切换逻辑，增加了异常处理机制以确保状态一致性。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;" />
-    <MESSAGE value="Aone Copilot 请求模型中..." />
     <MESSAGE value="chore: 添加Mac和Windows平台的启动" />
     <MESSAGE value="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此" />
     <MESSAGE value="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动" />
     <MESSAGE value="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动及设置脚本，并更新了项目依赖" />
     <MESSAGE value="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动及设置脚本，并更新了项目依赖文件以支持不同平台的需求。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动及设置脚本，并更新了项目依赖文件以支持不同平台的需求。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;" />
+    <MESSAGE value="Aone Copilot 请求模型中..." />
+    <MESSAGE value="docs(README): 补充Windows" />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明" />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于" />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle" />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的" />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的说明，并提供了降级至3." />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的说明，并提供了降级至3.2.2版本的解决方案。同时确认" />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的说明，并提供了降级至3.2.2版本的解决方案。同时确认了项目依赖文件中已固定该版本号" />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的说明，并提供了降级至3.2.2版本的解决方案。同时确认了项目依赖文件中已固定该版本号。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;" />
+    <option name="LAST_COMMIT_MESSAGE" value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的说明，并提供了降级至3.2.2版本的解决方案。同时确认了项目依赖文件中已固定该版本号。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
