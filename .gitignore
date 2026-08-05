@@ -21,7 +21,6 @@ saved_results/**/*.xlsx
 # YOLO数据集缓存
 *.cache
 # 数据集图片和标注
-data/
 data/yolov8/images/
 data/yolov8/labels/
 data/fasterrcnn/images/**/*.png
