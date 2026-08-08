@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="bebe37c2-8947-467e-b4c8-43640673906b" name="更改" comment="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的说明，并提供了降级至3.2.2版本的解决方案。同时确认了项目依赖文件中已固定该版本号。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/invoice_routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/routes/invoice_routes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/ocr_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/services/ocr_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/static/index.html" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;lianghengyu&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/lianghengyu/invoice_center.git&quot;,
+    &quot;accountId&quot;: &quot;f0c52fa7-a353-451b-a0b2-9448721ffc88&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="3GnhE3dIxf2NBBPdTzX7dufo4sh" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Notification.DisplayName-DoNotAsk-cosyBalloonNotifications&quot;: &quot;Qoder CN Notification Balloon Group&quot;,
+    &quot;Notification.DoNotAsk-cosyBalloonNotifications&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/liliuqing/workSpace_python/invoice_center&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;qoder.settings.plugin&quot;
+  },
+  &quot;keyToStringList&quot;: {
+    &quot;ChangesTree.GroupingKeys&quot;: [
+      &quot;repository&quot;
+    ]
+  }
+}</component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-4f4e415b4190-aa17d162503b-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-243.26053.29" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="应用程序级" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="bebe37c2-8947-467e-b4c8-43640673906b" name="更改" comment="" />
+      <created>1784613127453</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1784613127453</updated>
+    </task>
+    <task id="LOCAL-00001" summary="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle和torch各自携带libomp而导致的段错误问题。同时优化了ocr_manager中的引擎切换逻辑，增加了异常处理机制以确保状态一致性。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;">
+      <option name="closed" value="true" />
+      <created>1785202946344</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1785202946344</updated>
+    </task>
+    <task id="LOCAL-00002" summary="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动及设置脚本，并更新了项目依赖文件以支持不同平台的需求。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;">
+      <option name="closed" value="true" />
+      <created>1785203323514</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1785203323514</updated>
+    </task>
+    <task id="LOCAL-00003" summary="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的说明，并提供了降级至3.2.2版本的解决方案。同时确认了项目依赖文件中已固定该版本号。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;">
+      <option name="closed" value="true" />
+      <created>1785214627693</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1785214627693</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="29cde61c-036f-4387-a73d-1d04b3882b33" value="TOOL_WINDOW" />
+      </map>
+    </option>
+    <option name="TAB_STATES">
+      <map>
+        <entry key="29cde61c-036f-4387-a73d-1d04b3882b33">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="roots">
+                    <value>
+                      <list>
+                        <option value="$PROJECT_DIR$" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+            </State>
+          </value>
+        </entry>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="fix(ocr_service):" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle和torch各自携带libomp而导致的段" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle和torch各自携带libomp而导致的段错误问题。同时优化了ocr_manager" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle和torch各自携带libomp而导致的段错误问题。同时优化了ocr_manager中的引擎切换逻辑，增加了异常处理" />
+    <MESSAGE value="fix(ocr_service): 解决macOS上libomp重复加载导致的段错误&#10;&#10;此提交通过在导入相关库之前设置环境变量`KMP_DUPLICATE_LIB_OK`为`TRUE`，解决了macOS平台上由于paddle和torch各自携带libomp而导致的段错误问题。同时优化了ocr_manager中的引擎切换逻辑，增加了异常处理机制以确保状态一致性。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;" />
+    <MESSAGE value="chore: 添加Mac和Windows平台的启动" />
+    <MESSAGE value="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此" />
+    <MESSAGE value="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动" />
+    <MESSAGE value="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动及设置脚本，并更新了项目依赖" />
+    <MESSAGE value="chore: 添加Mac和Windows平台的启动及设置脚本，并更新依赖文件&#10;&#10;此提交添加了针对Mac和Windows平台的启动及设置脚本，并更新了项目依赖文件以支持不同平台的需求。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;" />
+    <MESSAGE value="Aone Copilot 请求模型中..." />
+    <MESSAGE value="docs(README): 补充Windows" />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明" />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于" />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle" />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的" />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的说明，并提供了降级至3." />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的说明，并提供了降级至3.2.2版本的解决方案。同时确认" />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的说明，并提供了降级至3.2.2版本的解决方案。同时确认了项目依赖文件中已固定该版本号" />
+    <MESSAGE value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的说明，并提供了降级至3.2.2版本的解决方案。同时确认了项目依赖文件中已固定该版本号。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;" />
+    <option name="LAST_COMMIT_MESSAGE" value="docs(README): 补充Windows平台PaddlePaddle版本兼容性说明&#10;&#10;此提交在README中增加了关于Windows平台上使用PaddlePaddle 3.3.x时可能遇到的问题的说明，并提供了降级至3.2.2版本的解决方案。同时确认了项目依赖文件中已固定该版本号。&#10;&#10;Co-developed-by: Aone Copilot &lt;noreply@alibaba-inc.com&gt;" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/main.py</url>
+          <line>8</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

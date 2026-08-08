@@ -56,8 +56,10 @@ def run_fasterrcnn(image_b64):
     img_rgb = Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
     model = fasterrcnn_resnet50_fpn(weights=None, num_classes=9)
-    if os.path.exists(FASTERRCNN_MODEL):
-        model.load_state_dict(torch.load(FASTERRCNN_MODEL, map_location='cpu', weights_only=True))
+    if not os.path.exists(FASTERRCNN_MODEL):
+        # 没有权重时不能继续：随机初始化模型会输出随机框，污染字段归属结果
+        raise FileNotFoundError(f"Faster R-CNN 权重不存在: {FASTERRCNN_MODEL}")
+    model.load_state_dict(torch.load(FASTERRCNN_MODEL, map_location='cpu', weights_only=True))
     model.eval()
 
     tensor = F.to_tensor(img_rgb).unsqueeze(0)

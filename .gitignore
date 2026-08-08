@@ -32,3 +32,35 @@ test_ocr.py
 test.py
 项目结构文档.md
 check_models.py
+.venv/
+__pycache__/
+uploads/
+exports/
+*.pyc
+.idea/
+.idea/workspace.xml
+.DS_Store
+.claude/
+model/
+test_ocr.py
+test.py
+runs/
+saved_results/*.pth # 模型权重
+saved_results/fasterrcnn_model/
+saved_results/**/*.pth # 模型权重
+saved_results/**/*.jpg
+saved_results/**/*.png
+saved_results/**/*.xlsx
+
+# YOLO数据集缓存
+*.cache
+# 数据集图片和标注
+data/yolov8/images/
+data/yolov8/labels/
+data/fasterrcnn/images/**/*.png
+data/fasterrcnn/images/**/*.jpg
+data/*.json
+data/*.png
+data/*.jpg
+data/fapiao_dataset/
+*.pt

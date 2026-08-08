@@ -71,7 +71,7 @@ def init_ocr():
 
 def recognize(image):
     ocr = _get_ocr()
-    results = ocr.readtext(image,)
+    results = ocr.readtext(image)
     if not results:
         return []
 
