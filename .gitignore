@@ -25,6 +25,7 @@ runs/
 *.onnx
 # 数据集全部忽略
 data/
+*.cache
 
 test_batch.py
 test_ocr.py

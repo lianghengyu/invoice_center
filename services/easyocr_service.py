@@ -3,6 +3,7 @@ import os
 os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "TRUE")
 import easyocr
 import urllib.request
+import paddle
 
 _ocr_instance = None
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -27,11 +28,37 @@ if not os.path.exists(zh_path):
     print("下载 zh_sim_g2.pth ...")
     urllib.request.urlretrieve(f"{MODEL_URL}/zh_sim_g2.pth", zh_path)
 
+# ===== 设备检测函数 =====
+def get_best_device():
+    """
+    检测并返回最佳的可用设备。
+    如果CUDA可用，返回 'gpu:0'，否则返回 'cpu'。
+    """
+    # 检查PaddlePaddle是否编译了CUDA支持，并且CUDA环境可用
+    if paddle.is_compiled_with_cuda():
+        try:
+            # 尝试创建一个在GPU上的张量来测试CUDA是否真的可用
+            test_tensor = paddle.to_tensor([1.0], place=paddle.CUDAPlace(0))
+            # 如果成功，说明CUDA可用
+            print("✅ CUDA is available. Using GPU: 0")
+            return 'gpu:0'
+        except Exception as e:
+            # 如果创建失败，说明CUDA不可用（例如驱动问题、显卡被占用等）
+            print(f"⚠️ CUDA is not available ({e}). Falling back to CPU.")
+            return 'cpu'
+    else:
+        print("ℹ️ PaddlePaddle not compiled with CUDA. Using CPU.")
+        return 'cpu'
+
+# 在程序开始时设置设备
+best_device = True if get_best_device() =="gpu:0" else False
+
+
 def _get_ocr():
     global _ocr_instance
     if _ocr_instance is None:
         _ocr_instance = easyocr.Reader(['ch_sim', 'en'], 
-                                       gpu=True,
+                                       gpu=best_device,
                                        model_storage_directory=MODEL_PATH,
                                        download_enabled=False,  
                                     )
@@ -44,7 +71,7 @@ def init_ocr():
 
 def recognize(image):
     ocr = _get_ocr()
-    results = ocr.readtext(image)
+    results = ocr.readtext(image,)
     if not results:
         return []
 

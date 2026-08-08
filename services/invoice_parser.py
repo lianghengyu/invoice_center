@@ -50,7 +50,7 @@ def _extract_invoice_code(text):
     if m:
         return m.group(1)
     # 兜底：独立的 12 位数字
-    m = re.search(r'(?<!\d)(\d{12})(?!\d)', text)
+    m = re.search(r'(?<!\d)(\d{10})(?!\d)', text)
     return m.group(1) if m else ''
 
 
@@ -62,6 +62,10 @@ def _extract_invoice_number(text):
     if m:
         return m.group(1)
     m = re.search(r'数电票号码[：:\s]*(\d{20})', text)
+    if m:
+        return m.group(1)
+    # 兜底：独立的 12 位数字
+    m = re.search(r'(?<!\d)(\d{8})(?!\d)', text)
     return m.group(1) if m else ''
 
 
