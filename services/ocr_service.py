@@ -8,6 +8,7 @@ import tarfile
 
 # ===== 路径配置 =====
 _ocr_instance = None
+_doc_ori_instance = None
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "..", "model", "paddleocr")
 os.makedirs(MODEL_PATH, exist_ok=True)
@@ -73,7 +74,9 @@ def _get_ocr():
         _ensure_models()  # 确保模型存在
         _ocr_instance = PaddleOCR(
             #lang='ch',
-            use_doc_orientation_classify=True,
+            # 整图方向由 ocr_manager.recognize_auto_rotate 显式纠正，管道内不再重复判角，
+            # 否则管道内部旋转会让 dt_polys 坐标与调用方持有的图片不在同一坐标系
+            use_doc_orientation_classify=False,
             use_doc_unwarping=False,
             use_textline_orientation=True,
             text_detection_model_dir=os.path.join(MODEL_PATH, 'PP-OCRv6_medium_det_infer'),
@@ -82,6 +85,37 @@ def _get_ocr():
             device=best_device,
         )
     return _ocr_instance
+
+
+def _get_doc_orientation():
+    """整图方向分类器（PP-LCNet_x1_0_doc_ori），单次推理约 10ms。"""
+    global _doc_ori_instance
+    if _doc_ori_instance is None:
+        from paddleocr import DocImgOrientationClassification
+        _doc_ori_instance = DocImgOrientationClassification(device=best_device)
+    return _doc_ori_instance
+
+
+def detect_orientation(image):
+    """判断整图被顺时针旋转了多少度，返回把它转正所需的 rotate90 次数（0-3）。
+
+    分类器返回的 label 是图像内容相对正向被顺时针旋转的角度，
+    因此需要反向补足：k = (4 - label/90) % 4。判断失败时返回 0，不做旋转。
+    """
+    try:
+        results = list(_get_doc_orientation().predict(image))
+        if not results:
+            return 0
+        labels = results[0].get('label_names') or []
+        if not labels:
+            return 0
+        angle = int(labels[0])
+    except Exception as e:
+        print(f"[方向分类] 判断失败，按 0° 处理: {e}")
+        return 0
+    if angle % 90 != 0:
+        return 0
+    return (4 - angle // 90) % 4
 
 
 def init_ocr():
@@ -135,16 +169,19 @@ def get_full_text(items):
     return '\n'.join(lines)
 
 def reset_ocr():
-    global _ocr_instance
+    global _ocr_instance, _doc_ori_instance
     if _ocr_instance is not None:
         try:
             import gc
             _ocr_instance = None
+            _doc_ori_instance = None
             gc.collect()
             import paddle
             if paddle.is_compiled_with_cuda():
                 paddle.device.cuda.empty_cache()
         except Exception:
             _ocr_instance = None
+            _doc_ori_instance = None
     else:
         _ocr_instance = None
+        _doc_ori_instance = None

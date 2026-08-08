@@ -1,5 +1,17 @@
 import re
 
+# 目标检测类别 -> 解析结果字段（类别名与 convert_to_yolov8.LABEL_MAP 保持一致）
+FIELD_BY_DETECT_CLASS = {
+    '发票代码': 'invoice_code',
+    '发票号码': 'invoice_number',
+    '发票日期': 'invoice_date',
+    '购买方名称': 'buyer_name',
+    '购买方纳税人识别号': 'buyer_tax_id',
+    '购买方纳税人税别号': 'buyer_tax_id',
+    '价税合计': 'total_amount',
+    '增值税电子普通发票': 'invoice_type',
+}
+
 
 def parse_invoice(ocr_items, full_text):
     result = {
@@ -473,3 +485,92 @@ def _extract_amounts_by_position(ocr_items, result):
                     result['amount'] = f"{cands[i]:.2f}"
                     result['tax_amount'] = f"{cands[j]:.2f}"
                     return
+
+
+def tag_items_with_fields(ocr_items, detections, min_cover=0.35):
+    """把检测框的字段名标到整图 OCR 的文本块上（写入 item['field_name']）。
+
+    文本块面积有 min_cover 以上落在某个检测框内即算归属于它；一个文本块同时命中
+    多个框时取覆盖率最高的。阈值取 0.35：实测中标签字样会伸出框外（如
+    "发票号码：07960724" 只有 0.44 落在框内），而误匹配的无关文本仅 0.1 左右。
+    只做标注，不修改文本与坐标，因此不会破坏解析基线。
+    """
+    boxes = [(d['class_name'], d['bbox']) for d in detections
+             if d.get('class_name') and d['class_name'] != '发票']
+
+    for it in ocr_items:
+        it.pop('field_name', None)
+        if not boxes:
+            continue
+        xs = [p[0] for p in it['box']]
+        ys = [p[1] for p in it['box']]
+        ix1, iy1, ix2, iy2 = min(xs), min(ys), max(xs), max(ys)
+        area = (ix2 - ix1) * (iy2 - iy1)
+        if area <= 0:
+            continue
+
+        best_name, best_cover = None, 0.0
+        for name, (dx1, dy1, dx2, dy2) in boxes:
+            ox = max(0.0, min(ix2, dx2) - max(ix1, dx1))
+            oy = max(0.0, min(iy2, dy2) - max(iy1, dy1))
+            cover = ox * oy / area
+            if cover > best_cover:
+                best_name, best_cover = name, cover
+        if best_cover >= min_cover:
+            it['field_name'] = best_name
+
+
+def fill_from_detections(result, ocr_items):
+    """用检测框标注的区域补全正则/坐标没抽到的字段，返回被补全的字段名列表。
+
+    只填空值，不覆盖已有结果，保证引入检测后的效果不会差于纯整图解析。
+    """
+    grouped = {}
+    for it in ocr_items:
+        name = it.get('field_name')
+        if name:
+            grouped.setdefault(name, []).append(it)
+
+    filled = []
+    for cls_name, items in grouped.items():
+        field = FIELD_BY_DETECT_CLASS.get(cls_name)
+        if not field:
+            continue
+        current = result.get(field)
+        if current and current != '未知类型':
+            continue
+        items.sort(key=lambda it: (it['y'], it['x']))
+        value = _value_from_field_text(field, ' '.join(it['text'] for it in items))
+        if value:
+            result[field] = value
+            filled.append(field)
+    return filled
+
+
+def _value_from_field_text(field, text):
+    """从单个字段区域的文本里抽值（区域已知，无需依赖标签字样）。"""
+    if field == 'invoice_type':
+        t = _extract_invoice_type(text)
+        return '' if t == '未知类型' else t
+
+    if field == 'invoice_date':
+        return _extract_date(text)
+
+    if field in ('invoice_code', 'invoice_number'):
+        m = re.search(r'(\d{8,20})', re.sub(r'[\s\-]', '', text))
+        return m.group(1) if m else ''
+
+    if field == 'buyer_tax_id':
+        raw = re.sub(r'[\s:：]', '', text)
+        m = TAX_ID_STRICT.search(raw) or TAX_ID_LOOSE.search(raw)
+        return m.group(1) if m else ''
+
+    if field == 'total_amount':
+        m = re.search(r'([\d,]+\.\d{2})', text)
+        return m.group(1).replace(',', '') if m else ''
+
+    if field == 'buyer_name':
+        m = re.search(r'名\s*称[\s:：]*(.+)', text)
+        return _clean_name(m.group(1) if m else text)
+
+    return ''

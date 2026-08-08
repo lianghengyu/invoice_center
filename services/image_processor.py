@@ -62,3 +62,15 @@ def _rotate_image(img, angle):
     return cv2.warpAffine(img, matrix, (w, h),
                           flags=cv2.INTER_CUBIC,
                           borderMode=cv2.BORDER_REPLICATE)
+
+
+def rotate90(img, k):
+    """顺时针旋转 90*k 度，k in {0,1,2,3}"""
+    k = k % 4
+    if k == 0:
+        return img
+    if k == 1:
+        return cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
+    if k == 2:
+        return cv2.rotate(img, cv2.ROTATE_180)
+    return cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)

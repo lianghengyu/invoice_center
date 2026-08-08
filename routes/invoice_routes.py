@@ -8,9 +8,9 @@ import base64
 from flask import Blueprint, request, jsonify, send_file, after_this_request
 from config import UPLOAD_FOLDER, ALLOWED_EXTENSIONS, SAVED_FOLDER
 from services.image_processor import preprocess, pdf_to_images
-from services.ocr_manager import recognize, get_full_text, get_current_engine
+from services.ocr_manager import recognize_auto_rotate, get_full_text, get_current_engine
 from services.detector_manager import detect_fields, get_current_detector, VALID_DETECTORS
-from services.invoice_parser import parse_invoice
+from services.invoice_parser import parse_invoice, tag_items_with_fields, fill_from_detections
 from services.excel_exporter import export_to_excel, DEFAULT_FILENAME
 from services.report_service import create_batch, record_recognition
 
@@ -82,6 +82,8 @@ def _img_to_base64(img):
 def _recognize_image(img, filename):
     start_time = time.time()
     try:
+        img, whole_ocr_items = recognize_auto_rotate(img)
+
         detector = get_current_detector()
         print(f"[调试] detector类型: {type(detector).__name__ if detector else 'None'}")
         
@@ -108,34 +110,18 @@ def _recognize_image(img, filename):
         else:
             print(f"[调试] 检测模型未加载，使用纯OCR")
 
-        # 阶段2: OCR识别（PaddlePaddle）
+        # 阶段2: 解析（整图OCR打底，检测框只用来给文本块标注字段归属）
+        # 不再对每个检测框重跑OCR：裁剪会切掉标签字样、丢失原图坐标，反而让解析变差
+        ocr_items = whole_ocr_items
+        full_text = get_full_text(ocr_items)
         if detections:
-            ocr_items = []
-            for det in detections:
-                if det['class_name'] == '发票':
-                    continue
-                try:
-                    x1, y1, x2, y2 = [int(v) for v in det['bbox']]
-                    x1, y1 = max(0, x1), max(0, y1)
-                    x2, y2 = min(img.shape[1], x2), min(img.shape[0], y2)
-                    if x2 <= x1 or y2 <= y1:
-                        continue
-                    crop = img[y1:y2, x1:x2]
-                    crop_ocr = recognize(crop)
-                    for item in crop_ocr:
-                        item['field_name'] = det['class_name']
-                    ocr_items.extend(crop_ocr)
-                except Exception as e:
-                    print(f"[OCR裁剪] {det['class_name']} 识别失败: {e}")
-                    continue
-
-            full_text = get_full_text(ocr_items)
-            parsed = parse_invoice(ocr_items, full_text)
+            tag_items_with_fields(ocr_items, detections)
+        parsed = parse_invoice(ocr_items, full_text)
+        if detections:
+            filled = fill_from_detections(parsed, ocr_items)
+            if filled:
+                print(f"[检测补全] {filename}: 由检测框补上 {filled}")
             parsed['detected_fields'] = detected_fields
-        else:
-            ocr_items = recognize(img)
-            full_text = get_full_text(ocr_items)
-            parsed = parse_invoice(ocr_items, full_text)
 
         parsed['filename'] = filename
         parsed['raw_text'] = full_text

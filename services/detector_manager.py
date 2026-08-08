@@ -1,6 +1,7 @@
 import os
 import json
 import subprocess
+import sys
 import base64
 import cv2
 
@@ -41,14 +42,15 @@ def detect_fields(image):
 
     try:
         result = subprocess.run(
-            ['python', SUBPROCESS_SCRIPT, _current_detector_name, image_b64],
+            # 用 sys.executable 而不是 'python'：后者走 PATH，可能落到没装 torch/ultralytics 的其它 venv
+            [sys.executable, SUBPROCESS_SCRIPT, _current_detector_name, image_b64],
             capture_output=True, text=True, timeout=60,
             env={**os.environ, 'KMP_DUPLICATE_LIB_OK': 'TRUE'}
         )
         if result.returncode == 0:
             return json.loads(result.stdout)
         else:
-            print(f"[子进程检测错误] stderr: {result.stderr[:200]}")
+            print(f"[子进程检测错误] {_current_detector_name} 失败，降级为纯OCR：\n{result.stderr.strip()[-800:]}")
             return []
     except subprocess.TimeoutExpired:
         print("[子进程检测] 超时")
