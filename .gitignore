@@ -30,8 +30,8 @@ data/
 test_batch.py
 test_ocr.py
 test.py
-项目结构文档.md
 check_models.py
+
 .venv/
 __pycache__/
 uploads/
