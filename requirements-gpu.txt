@@ -1,0 +1,7 @@
+# GPU 版依赖（仅限装有 NVIDIA 显卡 + CUDA 13.0 的 Windows / Linux 机器）
+# 安装方式（先装通用依赖，再覆盖安装 GPU 版）：
+#   pip install -r requirements.txt
+#   pip install -r requirements-gpu.txt --extra-index-url https://download.pytorch.org/whl/cu130
+# 注意：Mac 不要安装本文件！Mac 无 CUDA，直接用 requirements.txt 即可。
+paddlepaddle-gpu==3.3.0
+torch==2.13.0+cu130

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发票识别系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.9.1/dist/index.css">
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; background: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; color: #1d2129; }
+        .app-container { max-width: 1600px; margin: 0 auto; padding: 16px 20px; }
+        .header { text-align: center; padding: 12px 0 14px; }
+        .header h1 { font-size: 22px; color: #1d2129; margin: 0 0 4px; }
+        .header p { color: #86909c; margin: 0; font-size: 13px; }
+        .toolbar { background: #fff; border-radius: 8px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,.04); margin-bottom: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+        .toolbar .upload-inline { width: 35%; min-width: 300px; }
+        .toolbar .upload-inline .el-upload { width: 100%; }
+        .toolbar .upload-inline .el-upload-dragger { padding: 12px 20px; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .toolbar-actions { display: flex; gap: 8px; align-items: center; }
+        .toolbar-stats { display: flex; gap: 16px; font-size: 13px; color: #86909c; padding-left: 12px; border-left: 1px solid #e5e6eb; }
+        .toolbar-stats b { font-size: 15px; }
+        .main-layout { display: flex; gap: 16px; align-items: stretch; }
+        .left-panel, .right-panel { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.04); display: flex; flex-direction: column; min-height: 620px; }
+        .left-panel { flex: 1.1; min-width: 0; }
+        .right-panel { flex: 1; min-width: 0; }
+        .panel-header { padding: 14px 18px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+        .panel-header .panel-title { font-size: 15px; font-weight: 600; color: #1d2129; }
+        .panel-header .panel-sub { font-size: 12px; color: #86909c; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .panel-body { flex: 1; padding: 18px; overflow: auto; display: flex; flex-direction: column; }
+        .preview-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 8px 12px; background: #f7f8fa; border-radius: 6px; }
+        .preview-nav .filename { font-size: 13px; color: #1d2129; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; margin: 0 10px; }
+        .preview-nav .counter { font-size: 12px; color: #86909c; }
+        .preview-frame { flex: 1; display: flex; align-items: center; justify-content: center; background: #fafbfc; border: 1px dashed #dcdfe6; border-radius: 8px; padding: 16px; min-height: 460px; overflow: auto; }
+        .preview-frame img { max-width: 100%; max-height: 560px; object-fit: contain; border-radius: 4px; cursor: zoom-in; box-shadow: 0 2px 8px rgba(0,0,0,.08); transition: transform .2s; }
+        .preview-frame img:hover { transform: scale(1.02); }
+        .preview-frame iframe { width: 100%; height: 560px; border: none; border-radius: 4px; background: #fff; }
+        .preview-empty { text-align: center; color: #c9cdd4; }
+        .preview-empty .icon { font-size: 60px; margin-bottom: 12px; color: #dcdfe6; }
+        .preview-empty .title { font-size: 15px; color: #86909c; }
+        .preview-empty .desc { font-size: 13px; color: #c9cdd4; margin-top: 6px; }
+        .result-tabs { display: flex; gap: 6px; padding: 8px 18px 0; border-bottom: 1px solid #f0f0f0; overflow-x: auto; }
+        .result-tab { padding: 8px 14px; font-size: 13px; color: #86909c; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; display: flex; align-items: center; gap: 6px; transition: all .2s; }
+        .result-tab:hover { color: #409eff; }
+        .result-tab.active { color: #409eff; border-bottom-color: #409eff; font-weight: 500; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .status-dot.success { background: #67c23a; }
+        .status-dot.fail { background: #f56c6c; }
+        .field-list { display: flex; flex-direction: column; gap: 10px; }
+        .field-row { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 12px; padding: 4px 0; }
+        .field-label { font-size: 13px; color: #4e5969; font-weight: 500; text-align: right; }
+        .field-value { position: relative; }
+        .field-value input { width: 100%; height: 34px; padding: 0 12px; font-size: 13px; color: #1d2129; background: #f7f8fa; border: 1px solid #e5e6eb; border-radius: 6px; outline: none; transition: all .2s; font-family: inherit; }
+        .field-value input:hover { border-color: #c0c4cc; background: #fff; }
+        .field-value input:focus { border-color: #409eff; background: #fff; box-shadow: 0 0 0 3px rgba(64,158,255,.1); }
+        .field-value.missing input { background: #fff8e1; border-color: #ffb020; color: #b06000; }
+        .field-value.missing::after { content: '未识别'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #b06000; background: #fff3cd; padding: 2px 8px; border-radius: 10px; font-weight: 500; pointer-events: none; }
+        .field-value.warn input { background: #fef2f2; border-color: #f56c6c; color: #991b1b; }
+        .field-value.warn::after { content: '位数异常'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 11px; color: #991b1b; background: #fef2f2; padding: 2px 8px; border-radius: 10px; font-weight: 500; pointer-events: none; }
+        .field-value.money input { color: #e6a23c; font-weight: 700; }
+        .raw-text-section { margin-top: 16px; padding-top: 14px; border-top: 1px dashed #e5e6eb; }
+        .raw-text-label { font-size: 12px; color: #86909c; font-weight: 500; margin-bottom: 8px; }
+        .raw-text-box { background: #f7f8fa; padding: 10px 12px; border-radius: 6px; font-size: 12px; line-height: 1.7; white-space: pre-wrap; word-break: break-all; max-height: 160px; overflow-y: auto; color: #4e5969; border: 1px solid #e5e6eb; }
+        .empty-right { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #c9cdd4; padding: 60px 20px; }
+        .empty-right .icon { font-size: 60px; margin-bottom: 12px; color: #dcdfe6; }
+        .empty-right .title { font-size: 15px; color: #86909c; }
+        .empty-right .desc { font-size: 13px; color: #c9cdd4; margin-top: 6px; }
+        @media (max-width: 1100px) {
+            .main-layout { flex-direction: column; }
+            .left-panel, .right-panel { min-height: auto; }
+            .toolbar-stats { border-left: none; padding-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="app-container">
+            <div class="header">
+                <h1>发票识别系统</h1>
+                <p>支持增值税普通/专用/全电发票 | 上传图片或 PDF 自动识别</p>
+            </div>
+
+            <el-tabs v-model="activeTab" type="border-card">
+                <el-tab-pane name="recognize" label="图片识别">
+                    <div class="toolbar">
+                        <div class="upload-inline">
+                            <el-upload ref="uploadRef" drag multiple :auto-upload="false"
+                                v-model:file-list="fileList" :on-change="onFileChange"
+                                accept=".jpg,.jpeg,.png,.bmp,.tiff,.tif,.pdf"
+                                :disabled="loading" :show-file-list="false">
+                                <el-icon style="width:450px;font-size:24px;color:#c0c4cc"><upload-filled></upload-filled></el-icon>
+                                <span style="color:#4e5969;font-size:13px">拖拽或点击上传发票（JPG / PNG / PDF）</span>
+                            </el-upload>
+                        </div>
+                        <div class="toolbar-actions">
+                            <el-select v-model="detectorModel" @change="onDetectorChange" size="small" style="width:130px;margin-right:8px" placeholder="检测模型">
+                                <el-option label="YOLO V10" value="yolov10"></el-option>
+                                <el-option label="YOLO V8" value="yolov8"></el-option>
+                                <el-option label="Faster R-CNN" value="fasterrcnn"></el-option>
+                                <el-option label="无检测" value="none"></el-option>
+                            </el-select>
+                            <el-select v-model="ocrEngine" @change="onEngineChange" size="small" style="width:120px;margin-right:8px" placeholder="OCR引擎">
+                                <el-option label="PaddleOCR" value="paddle"></el-option>
+                                <el-option label="EasyOCR" value="easyocr"></el-option>
+                            </el-select>
+                            <el-button type="primary" @click="startRecognize" :loading="loading" :disabled="fileList.length===0">
+                                {{ buttonText }}
+                            </el-button>
+                            <el-button type="success" @click="saveResults" :disabled="loading || successCount===0" v-if="results.length > 0">
+                                <el-icon style="margin-right:4px"><check></check></el-icon>保存结果
+                            </el-button>
+                            <el-button @click="clearAll" :disabled="loading">清空</el-button>
+                        </div>
+                        <div class="toolbar-stats" v-if="results.length > 0">
+                            <span>共 <b style="color:#409eff">{{ results.length }}</b> 条</span>
+                            <span>成功 <b style="color:#67c23a">{{ successCount }}</b></span>
+                            <span v-if="errorCount>0">失败 <b style="color:#f56c6c">{{ errorCount }}</b></span>
+                            <span>合计 <b style="color:#e6a23c">¥{{ totalAmount }}</b></span>
+                        </div>
+                    </div>
+
+                    <el-progress v-if="loading" :percentage="progressPercent" :stroke-width="4" style="margin-bottom:16px" :format="formatProgress"></el-progress>
+
+                    <div class="main-layout">
+                        <div class="left-panel">
+                            <div class="panel-header">
+                                <div class="panel-title">📄 发票原图</div>
+                                <div class="panel-sub" v-if="previews.length > 0">{{ previews[previewIdx].name }}</div>
+                            </div>
+                            <div class="panel-body">
+                                <div class="preview-nav" v-if="previews.length > 1">
+                                    <el-button-group size="small">
+                                        <el-button @click="prevPreview" :disabled="previewIdx===0">
+                                            <el-icon><arrow-left></arrow-left></el-icon>
+                                            <span style="margin-left:4px">上一张</span>
+                                        </el-button>
+                                        <el-button @click="nextPreview" :disabled="previewIdx>=previews.length-1">
+                                            <span style="margin-right:4px">下一张</span>
+                                            <el-icon><arrow-right></arrow-right></el-icon>
+                                        </el-button>
+                                    </el-button-group>
+                                    <span class="counter">{{ previewIdx+1 }} / {{ previews.length }}</span>
+                                </div>
+                                <div class="preview-frame">
+                                    <template v-if="previews.length > 0 && previews[previewIdx]">
+                                        <img v-if="previews[previewIdx].type==='image'"
+                                             :src="currentResult && currentResult.preview_image ? 'data:image/jpeg;base64,' + currentResult.preview_image : previews[previewIdx].url"
+                                             @click="openPreviewDialog(currentResult && currentResult.preview_image ? 'data:image/jpeg;base64,' + currentResult.preview_image : previews[previewIdx].url)">
+                                        <iframe v-else-if="previews[previewIdx].type==='pdf'"
+                                                :src="previews[previewIdx].url"></iframe>
+                                    </template>
+                                    <div v-else class="preview-empty">
+                                        <div class="icon"><el-icon><picture></picture></el-icon></div>
+                                        <div class="title">暂无图片</div>
+                                        <div class="desc">上传发票后此处将展示原图</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="right-panel">
+                            <div class="panel-header">
+                                <div class="panel-title">📝 结构化关键字段</div>
+                                <el-tag v-if="currentResult" :type="currentResult.error ? 'danger' : 'success'" size="small">
+                                    {{ currentResult.error ? '识别失败' : '识别成功' }}
+                                </el-tag>
+                            </div>
+
+                            <div class="result-tabs" v-if="results.length > 1">
+                                <div v-for="(r, idx) in results" :key="idx"
+                                     class="result-tab" :class="{active: previewIdx === idx}"
+                                     @click="previewIdx = idx">
+                                    <span class="status-dot" :class="r.error ? 'fail' : 'success'"></span>
+                                    <span>{{ r.filename }}</span>
+                                </div>
+                            </div>
+
+                            <div class="panel-body">
+                                <template v-if="currentResult">
+                                    <el-alert v-if="currentResult.error"
+                                              :title="currentResult.error" type="error"
+                                              show-icon :closable="false" style="margin-bottom:12px"></el-alert>
+
+                                    <div class="field-list" v-if="!currentResult.error">
+                                        <div class="field-row">
+                                            <div class="field-label">文件名</div>
+                                            <div class="field-value">
+                                                <input type="text" :value="currentResult.filename || ''" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">发票类型</div>
+                                            <div class="field-value" :class="{missing: !currentResult.invoice_type}">
+                                                <input type="text" :value="currentResult.invoice_type || ''" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">发票号码</div>
+                                            <div class="field-value" :class="{missing: !currentResult.invoice_number}">
+                                                <input type="text" :value="currentResult.invoice_number || ''" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">发票代码</div>
+                                            <div class="field-value" :class="{missing: !currentResult.invoice_code}">
+                                                <input type="text" :value="currentResult.invoice_code || ''" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">开票日期</div>
+                                            <div class="field-value" :class="{missing: !currentResult.invoice_date}">
+                                                <input type="text" :value="currentResult.invoice_date || ''" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">购买方名称</div>
+                                            <div class="field-value" :class="{missing: !currentResult.buyer_name}">
+                                                <input type="text" :value="currentResult.buyer_name || ''" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">购买方税号</div>
+                                            <div class="field-value" :class="{missing: !currentResult.buyer_tax_id, warn: currentResult.buyer_tax_id && currentResult.buyer_tax_id.length !== 18}">
+                                                <input type="text" :value="currentResult.buyer_tax_id || ''" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">价税合计</div>
+                                            <div class="field-value money" :class="{missing: !currentResult.total_amount}">
+                                                <input type="text" :value="currentResult.total_amount ? '¥ ' + currentResult.total_amount : ''" readonly>
+                                            </div>
+                                        </div>
+                                        <div class="field-row">
+                                            <div class="field-label">识别耗时</div>
+                                            <div class="field-value">
+                                                <input type="text" :value="currentResult.duration ? currentResult.duration + ' s' : ''" readonly>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="raw-text-section" v-if="currentResult.raw_text">
+                                        <div class="raw-text-label">OCR 原始识别文本</div>
+                                        <div class="raw-text-box">{{ currentResult.raw_text }}</div>
+                                    </div>
+                                </template>
+
+                                <div v-else class="empty-right">
+                                    <div class="icon"><el-icon><document-copy></document-copy></el-icon></div>
+                                    <div class="title">暂无识别结果</div>
+                                    <div class="desc">上传发票后点击「开始识别」</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </el-tab-pane>
+
+                <el-tab-pane name="batch" label="导出识别结果">
+                    <div style="max-width:800px;margin:0 auto">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                            <span style="font-size:15px;font-weight:600;color:#1d2129">📁 已保存的识别结果</span>
+                            <el-button size="small" @click="loadSavedFiles">
+                                <el-icon style="margin-right:4px"><refresh></refresh></el-icon>刷新
+                            </el-button>
+                        </div>
+
+                        <el-table :data="savedFiles" v-loading="savedLoading" empty-text="暂无保存的文件"
+                                  stripe style="width:100%" size="default">
+                            <el-table-column prop="filename" label="文件名" min-width="240"></el-table-column>
+                            <el-table-column prop="created_at" label="保存时间" width="180" align="center"></el-table-column>
+                            <el-table-column label="文件大小" width="120" align="center">
+                                <template #default="scope">
+                                    {{ formatFileSize(scope.row.size) }}
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="操作" width="180" align="center">
+                                <template #default="scope">
+                                    <el-button type="primary" link size="small" @click="downloadFile(scope.row.filename)">
+                                        <el-icon style="margin-right:2px"><download></download></el-icon>下载
+                                    </el-button>
+                                    <el-button type="danger" link size="small" @click="deleteFile(scope.row.filename)">
+                                        <el-icon style="margin-right:2px"><delete></delete></el-icon>删除
+                                    </el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+                </el-tab-pane>
+            </el-tabs>
+        </div>
+
+        <el-dialog v-model="previewDialogVisible" title="图片预览" width="auto" align-center destroy-on-close>
+            <img :src="previewDialogUrl" style="max-width:100%;max-height:75vh;display:block;margin:0 auto">
+        </el-dialog>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus@2.9.1/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+    <script>
+    var app = Vue.createApp({
+        data: function() {
+            return {
+                activeTab: 'recognize',
+                fileList: [],
+                previews: [],
+                previewIdx: 0,
+                results: [],
+                loading: false, progress: 0, totalFiles: 0,
+                previewDialogVisible: false, previewDialogUrl: '',
+                savedFiles: [],
+                savedLoading: false,
+                ocrEngine: 'paddle',
+                detectorModel: 'yolov8',
+            };
+        },
+        computed: {
+            buttonText: function() { return this.loading ? '识别中 ('+this.progress+'/'+this.totalFiles+')' : '开始识别'; },
+            successCount: function() { return this.results.filter(function(r){return !r.error}).length; },
+            errorCount: function() { return this.results.filter(function(r){return r.error}).length; },
+            progressPercent: function() { return this.totalFiles>0 ? Math.round(this.progress/this.totalFiles*100) : 0; },
+            totalAmount: function() {
+                var s=0; this.results.forEach(function(r){ var v=parseFloat(r.total_amount); if(!isNaN(v)) s+=v; });
+                return s>0 ? s.toFixed(2) : '0.00';
+            },
+            currentResult: function() {
+                if (this.results.length === 0) return null;
+                if (this.previewIdx >= this.results.length) return this.results[this.results.length - 1];
+                return this.results[this.previewIdx];
+            }
+        },
+        watch: {
+            fileList: {
+                handler: function(newList) {
+                    var self = this;
+                    var existing = {};
+                    this.previews.forEach(function(p) { existing[p.name] = true; });
+                    newList.forEach(function(f) {
+                        var raw = f.raw;
+                        if (!raw || existing[raw.name]) return;
+                        var ext = raw.name.split('.').pop().toLowerCase();
+                        var url = URL.createObjectURL(raw);
+                        self.previews.push({ name: raw.name, url: url, type: (ext === 'pdf') ? 'pdf' : 'image' });
+                        existing[raw.name] = true;
+                    });
+                },
+                deep: true
+            },
+            activeTab: function(val) {
+                if (val === 'batch') {
+                    this.loadSavedFiles();
+                }
+            }
+        },
+        mounted: async function() {
+            try {
+                var resp = await fetch('/api/invoice/current-engine');
+                var data = await resp.json();
+                if (data.success && data.current) {
+                    this.ocrEngine = data.current;
+                }
+            } catch (e) {}
+            try {
+                var resp2 = await fetch('/api/invoice/current-detector');
+                var data2 = await resp2.json();
+                if (data2.success && data2.current) {
+                    this.detectorModel = data2.current;
+                }
+            } catch (e) {}
+        },
+        methods: {
+            onFileChange: function(file) {
+                var raw = file.raw;
+                if (!raw) return;
+                for (var i = 0; i < this.previews.length; i++) {
+                    if (this.previews[i].name === raw.name) return;
+                }
+                var ext = raw.name.split('.').pop().toLowerCase();
+                var url = URL.createObjectURL(raw);
+                this.previews.push({ name: raw.name, url: url, type: (ext === 'pdf') ? 'pdf' : 'image' });
+            },
+            prevPreview: function() { if (this.previewIdx > 0) this.previewIdx--; },
+            nextPreview: function() { if (this.previewIdx < this.previews.length - 1) this.previewIdx++; },
+            openPreviewDialog: function(url) {
+                this.previewDialogUrl = url;
+                this.previewDialogVisible = true;
+            },
+            formatProgress: function() { return this.progress+'/'+this.totalFiles; },
+            startRecognize: async function() {
+                if (this.fileList.length === 0) return;
+
+                // 确保检测模型已同步到后端
+                console.log('[前端] 开始识别, detectorModel =', this.detectorModel);
+                try {
+                    await fetch('/api/invoice/switch-detector', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ detector: this.detectorModel })
+                    });
+                } catch (e) {
+                    console.warn('[前端] 同步检测模型失败:', e);
+                }
+
+                this.loading = true;
+                this.progress = 0;
+                this.results = [];
+                this.totalFiles = this.fileList.length;
+                for (var i = 0; i < this.fileList.length; i++) {
+                    var file = this.fileList[i].raw;
+                    var fname = this.fileList[i].name || (file ? file.name : '未知文件');
+                    if (!file) continue;
+                    var fd = new FormData(); fd.append('files', file);
+                    try {
+                        var resp = await fetch('/api/invoice/recognize', { method: 'POST', body: fd });
+                        var data = await resp.json();
+                        if (data.success && data.results && data.results.length > 0) {
+                            for (var j = 0; j < data.results.length; j++) {
+                                this.results.push(data.results[j]);
+                            }
+                        } else {
+                            this.results.push({ filename: fname, error: (data.message || '识别失败') });
+                        }
+                    } catch (err) {
+                        this.results.push({ filename: fname, error: '网络错误: ' + err.message });
+                    }
+                    this.progress = i + 1;
+                }
+                this.loading = false;
+                this.previewIdx = 0;
+                if (this.errorCount === 0) {
+                    ElementPlus.ElMessage.success('识别完成，共 ' + this.results.length + ' 条');
+                } else {
+                    ElementPlus.ElMessage.warning('识别完成: ' + this.successCount + ' 成功, ' + this.errorCount + ' 失败');
+                }
+            },
+            saveResults: async function() {
+                var successResults = this.results.filter(function(r) { return !r.error; });
+                if (successResults.length === 0) {
+                    ElementPlus.ElMessage.warning('没有成功识别的结果可保存');
+                    return;
+                }
+                var cleanResults = successResults.map(function(r) {
+                    return {
+                        filename: r.filename || '',
+                        invoice_type: r.invoice_type || '',
+                        invoice_code: r.invoice_code || '',
+                        invoice_number: r.invoice_number || '',
+                        invoice_date: r.invoice_date || '',
+                        buyer_name: r.buyer_name || '',
+                        buyer_tax_id: r.buyer_tax_id || '',
+                        seller_name: r.seller_name || '',
+                        seller_tax_id: r.seller_tax_id || '',
+                        amount: r.amount || '',
+                        tax_amount: r.tax_amount || '',
+                        total_amount: r.total_amount || '',
+                        check_code: r.check_code || ''
+                    };
+                });
+                try {
+                    var resp = await fetch('/api/invoice/save-results', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ results: cleanResults })
+                    });
+                    var data = await resp.json();
+                    if (data.success) {
+                        ElementPlus.ElMessage.success('已保存 ' + data.count + ' 条结果到 ' + data.filename);
+                    } else {
+                        ElementPlus.ElMessage.error(data.message || '保存失败');
+                    }
+                } catch (err) {
+                    ElementPlus.ElMessage.error('保存失败: ' + err.message);
+                }
+            },
+            loadSavedFiles: async function() {
+                this.savedLoading = true;
+                try {
+                    var resp = await fetch('/api/invoice/saved-files');
+                    var data = await resp.json();
+                    if (data.success) {
+                        this.savedFiles = data.files;
+                    }
+                } catch (err) {
+                    ElementPlus.ElMessage.error('加载文件列表失败');
+                } finally {
+                    this.savedLoading = false;
+                }
+            },
+            downloadFile: function(filename) {
+                var a = document.createElement('a');
+                a.href = '/api/invoice/saved-files/' + encodeURIComponent(filename);
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            },
+            deleteFile: function(filename) {
+                var self = this;
+                ElementPlus.ElMessageBox.confirm('确定删除 "' + filename + '" 吗？', '确认删除', {
+                    type: 'warning'
+                }).then(async function() {
+                    try {
+                        var resp = await fetch('/api/invoice/saved-files/' + encodeURIComponent(filename), { method: 'DELETE' });
+                        var data = await resp.json();
+                        if (data.success) {
+                            ElementPlus.ElMessage.success('已删除');
+                            self.loadSavedFiles();
+                        }
+                    } catch (err) {
+                        ElementPlus.ElMessage.error('删除失败');
+                    }
+                }).catch(function() {});
+            },
+            formatFileSize: function(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+            },
+            clearAll: function() {
+                this.previews.forEach(function(p){ try{URL.revokeObjectURL(p.url)}catch(e){} });
+                this.fileList = [];
+                this.previews = [];
+                this.previewIdx = 0;
+                this.results = [];
+                if (this.$refs.uploadRef) this.$refs.uploadRef.clearFiles();
+            },
+            onEngineChange: async function(engine) {
+                ElementPlus.ElMessage.info('正在切换引擎...');
+                try {
+                    var resp = await fetch('/api/invoice/switch-engine', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ engine: engine })
+                    });
+                    var data = await resp.json();
+                    if (data.success) {
+                        var label = engine === 'paddle' ? 'PaddleOCR' : 'EasyOCR';
+                        ElementPlus.ElMessage.success('已切换到: ' + label);
+                    } else {
+                        ElementPlus.ElMessage.error(data.message || '切换失败');
+                        this.ocrEngine = this.ocrEngine === 'paddle' ? 'easyocr' : 'paddle';
+                    }
+                } 
+                catch (err) {
+                    ElementPlus.ElMessage.error('切换失败: ' + err.message);
+                    this.ocrEngine = this.ocrEngine === 'paddle' ? 'easyocr' : 'paddle';
+                }   
+            },
+            onDetectorChange: async function(detector) {
+                console.log('[前端] onDetectorChange 被调用, detector =', detector);
+                ElementPlus.ElMessage.info('正在切换检测模型...');
+                try {
+                    var resp = await fetch('/api/invoice/switch-detector', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ detector: detector })
+                    });
+                    var data = await resp.json();
+                    console.log('[前端] switch-detector 响应:', data);
+                    if (data.success) {
+                        var labels = {
+                            'none': '无检测',
+                            'yolov8': 'YOLO V8（同事训练）',
+                            'yolov10': 'YOLO V10（V7训练）',
+                            'fasterrcnn': 'Faster R-CNN'
+                        };
+                        var label = labels[detector] || detector;
+                        ElementPlus.ElMessage.success('已切换到: ' + label);
+                    } else {
+                        ElementPlus.ElMessage.error(data.message || '切换失败');
+                        this.detectorModel = 'none';
+                    }
+                } catch (err) {
+                    ElementPlus.ElMessage.error('切换失败: ' + err.message);
+                    this.detectorModel = 'none';
+                }
+            },
+        }
+    });
+    for (var k in ElementPlusIconsVue) app.component(k, ElementPlusIconsVue[k]);
+    app.use(ElementPlus);
+    app.mount('#app');
+    </script>
+</body>
+</html>

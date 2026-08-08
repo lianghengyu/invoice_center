@@ -1,0 +1,33 @@
+# 虚拟环境
+.venv/
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+# 上传与导出
+uploads/
+exports/
+# IDE 配置
+.idea/
+.vscode/
+*.iml
+# 系统文件
+.DS_Store
+# AI 工具配置
+.claude/
+# 模型与训练目录
+model/
+saved_results/
+runs/
+*.pt
+*.pth
+*.onnx
+# 数据集全部忽略
+data/
+
+test_batch.py
+test_ocr.py
+test.py
+项目结构文档.md
+check_models.py
